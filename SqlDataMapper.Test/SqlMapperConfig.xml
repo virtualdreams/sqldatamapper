@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<sqlMapConfig>
+	<providers file="./providers.xml" />
+	<database provider="sqlite" connectionString="Data Source=sqlite.db; Version=3;" />
+	<sqlMaps>
+		<sqlMap file="./query.xml" />
+	</sqlMaps>
+</sqlMapConfig>

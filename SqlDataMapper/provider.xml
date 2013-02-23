@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<providers>
+	<provider 
+		id="mysql" 
+		assemblyName="MySql.Data" 
+		connectionClass="MySql.Data.MySqlClient.MySqlConnection" 
+	/>
+	<provider
+		id="mssql2.0"
+		assemblyName="System.Data, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+		connectionClass="System.Data.SqlClient.SqlConnection"
+	/>
+	<provider 
+		id="oracle" 
+		assemblyName="Devart.Data.Oracle" 
+		connectionClass="Devart.Data.Oracle.OracleConnection" 
+	/>
+	<provider 
+		id="sqlite3" 
+		assemblyName="System.Data.SQLite" 
+		connectionClass="System.Data.SQLite.SQLiteConnection" 
+	/>
+</providers>

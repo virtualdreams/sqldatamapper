@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<providers>
+	<provider 
+		id="sqlite" 
+		assemblyName="System.Data.SQLite" 
+		connectionClass="System.Data.SQLite.SQLiteConnection" 
+	/>
+</providers>

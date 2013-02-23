@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="sqlMap">
+    <xs:complexType>
+      <xs:sequence minOccurs="0" maxOccurs="unbounded">
+        <xs:element minOccurs="0" maxOccurs="unbounded" name="select">
+          <xs:complexType>
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute name="id" type="xs:string" use="required" />
+                <xs:attribute name="class" type="xs:string" use="required" />
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        </xs:element>
+        <xs:element minOccurs="0" maxOccurs="unbounded" name="insert">
+          <xs:complexType>
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute name="id" type="xs:string" use="required" />
+                <xs:attribute name="class" type="xs:string" use="required" />
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        </xs:element>
+        <xs:element minOccurs="0" maxOccurs="unbounded" name="update">
+          <xs:complexType>
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute name="id" type="xs:string" use="required" />
+                <xs:attribute name="class" type="xs:string" use="required" />
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        </xs:element>
+        <xs:element minOccurs="0" maxOccurs="unbounded" name="delete">
+          <xs:complexType>
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute name="id" type="xs:string" use="required" />
+                <xs:attribute name="class" type="xs:string" use="required" />
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        </xs:element>
+        <xs:element minOccurs="0" maxOccurs="unbounded" name="include">
+          <xs:complexType>
+            <xs:attribute name="file" type="xs:string" use="required" />
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
