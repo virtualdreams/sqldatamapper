@@ -58,7 +58,7 @@
     <Compile Include="Test_SqlMapper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SqlDataMapper\SqlDataMapper.csproj">
+    <ProjectReference Include="..\SqlDataMapper\SqlDataMapper_VS2008.csproj">
       <Project>{8775A8A7-55DB-4065-BADF-E90E09145665}</Project>
       <Name>SqlDataMapper</Name>
     </ProjectReference>
