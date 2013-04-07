@@ -471,6 +471,11 @@ namespace SqlDataMapper
 			{
 				return String.Format("null");
 			}
+			
+			if (value.GetType() == typeof(bool))
+			{
+				return (bool)value ? 1 : 0;
+			}
 
 			if (value.GetType() == typeof(byte[]))
 			{
