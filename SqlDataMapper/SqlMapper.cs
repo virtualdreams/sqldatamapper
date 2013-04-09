@@ -153,7 +153,6 @@ namespace SqlDataMapper
 			try
 			{
 				filename = ConvertToFullPath(filename);
-				//filename = MappedFilename(filename);
 
 				XDocument doc = XDocument.Load(filename, LoadOptions.None);
 				
@@ -177,7 +176,6 @@ namespace SqlDataMapper
 			try
 			{
 				filename = ConvertToFullPath(filename);
-				//filename = MappedFilename(filename);
 				
 				XDocument doc = XDocument.Load(filename, LoadOptions.None);
 
@@ -201,7 +199,6 @@ namespace SqlDataMapper
 			try
 			{
 				filename = ConvertToFullPath(filename);
-				//filename = MappedFilename(filename);
 
 				XDocument doc = XDocument.Load(filename, LoadOptions.None);
 
@@ -212,6 +209,7 @@ namespace SqlDataMapper
 				LoadInserts(doc);
 				LoadUpdates(doc);
 				LoadDeletes(doc);
+				LoadSegments(doc);
 				LoadInclude(doc);
 			}
 			catch (Exception ex)
@@ -358,23 +356,14 @@ namespace SqlDataMapper
 		#region Statement methods
 
 		/// <summary>
-		/// Get the named unmodified raw sql statement from the cache.
+		/// Get the named raw sql statement from the cache.
 		/// </summary>
 		/// <param name="id">The name of the sql statement</param>
 		/// <returns>Returns the raw statement.</returns>
-		public string GetStatementRaw(string id)
+		public string GetStatement(string id)
 		{
 			if(String.IsNullOrEmpty(id))
 				throw new ArgumentException("The parameter must contain an id.", "id");
-			
-			//extract the user defined statement and return it
-			//if(id.StartsWith("::") && id.Length > 2)
-			//{
-			//    if(id.Length > 2)
-			//        return id.Substring(2);
-			//    else
-			//        throw new SqlDataMapperException("The embedded sql statement must contain a statement.");
-			//}
 			
 			//get statement from pool
 			if (!m_Statements.Contains(id))
@@ -392,7 +381,7 @@ namespace SqlDataMapper
 		/// <returns>New SqlQuery object</returns>
 		public SqlQuery CreateQuery(string id)
 		{
-			return new SqlQuery(GetStatementRaw(id));
+			return new SqlQuery(GetStatement(id));
 		}
 		
 		/// <summary>
@@ -404,7 +393,7 @@ namespace SqlDataMapper
 		public T CreateQuery<T>(string id) where T: ISqlQuery, new()
 		{
 			T t = new T();
-			t.Set(GetStatementRaw(id));
+			t.Set(GetStatement(id));
 			return t;
 		}
 		
@@ -703,93 +692,16 @@ namespace SqlDataMapper
 		#region Internal methods
 		
 		/// <summary>
-		/// TEST - DO NOT TRACK!
+		/// The class type must match with provided class name from the sql map
 		/// </summary>
 		private void CheckClassType()
 		{
-			//if (!String.Equals(typeof(T).FullName, GetClassname(id)))
-			//{
-			//    throw new Exception(String.Format("The class type '{0}' doesn't match with statement provided class type '{1}'", typeof(T).GetType().FullName, GetClassname(id)));
-			//}
+		//    if (!String.Equals(typeof(T).FullName, GetClassname(id)))
+		//    {
+		//        throw new Exception(String.Format("The class type '{0}' doesn't match with statement provided class type '{1}'", typeof(T).GetType().FullName, GetClassname(id)));
+		//    }
 		}
-
-		/// <summary>
-		/// Replace sql parameters by SqlParameter.
-		/// </summary>
-		/// <param name="query">The cleaned sql statement.</param>
-		/// <param name="parameters">The SqlParameter object.</param>
-		/// <returns>Returns a sql-ready statement if all parameters replaced.</returns>
-		private string SqlParameters(string query, SqlParameter parameters)
-		{
-			foreach (DictionaryEntry entry in parameters.Parameters)
-			{
-				object obj = parameters.Parameters[entry.Key];
-
-				query = Regex.Replace(query, String.Format("(#{0}#)", entry.Key), String.Format("{0}", ParameterTypeToSqlType(obj)), RegexOptions.None);
-
-			}
-			return query;
-		}
-
-		/// <summary>
-		/// Replace the given object to a sql-like object.
-		/// </summary>
-		/// <param name="obj">A object of some type</param>
-		/// <returns>Returns a sql primitive if possible</returns>
-		private object ParameterTypeToSqlType(object obj)
-		{
-			IEnumerable enumerable = obj as IEnumerable;
-			if(enumerable != null && obj.GetType() != typeof(string) && obj.GetType() != typeof(byte[]))
-			{
-				StringBuilder sb = new StringBuilder();
-				foreach(var element in enumerable)
-				{
-					if(sb.Length > 0)
-						sb.Append(", ");
-					sb.Append(Primitive(element));
-				}
-				
-				return sb.ToString();
-			}
-			
-			return Primitive(obj);
-		}
-		
-		/// <summary>
-		/// Get the primitive of the object.
-		/// </summary>
-		/// <param name="obj">The object of some type</param>
-		/// <returns>Returns a object as a sql primitive</returns>
-		private object Primitive(object obj)
-		{
-			if (obj == null)
-			{
-				return String.Format("null");
-			}
-			
-			if (obj.GetType() == typeof(byte[]))
-			{
-				return ("0x" + BitConverter.ToString(obj as byte[]).Replace("-", String.Empty));
-			}
-
-			if (obj.GetType() == typeof(DateTime))
-			{
-				return String.Format("'{0:yyyy-MM-dd HH:mm:ss}'", obj);
-			}
-
-			if (obj.GetType() == typeof(string))
-			{
-				return String.Format("'{0}'", obj);
-			}
-
-			if (obj.GetType() == typeof(char))
-			{
-				return String.Format("'{0}'", obj);
-			}
-			
-			return obj;
-		}
-		
+	
 		/// <summary>
 		/// Get the associated classname for the provided statement.
 		/// </summary>
@@ -803,16 +715,6 @@ namespace SqlDataMapper
 			}
 			Statement st = (Statement)m_Statements[id];
 			return st.classname;
-		}
-
-		/// <summary>
-		/// Format the loaded sql statement and replace special characters into whitespaces.
-		/// </summary>
-		/// <param name="value">string containing the sql statement</param>
-		/// <returns>returns formated sql statement</returns>
-		private string SqlFormat(string value)
-		{
-			return Regex.Replace(value.Replace('\r', ' ').Replace('\n', ' ').Replace("\r\n", " ").Replace('\t', ' '), @"\s{2,}", " ");
 		}
 
 		/// <summary>
@@ -888,7 +790,7 @@ namespace SqlDataMapper
 				string value = select.value.Trim();
 				string cl = select.cl.Trim();
 				
-				AddStatement(id, new Statement { statement = value, classname = cl} );
+				AddStatement(id, new Statement { statement = value, classname = cl });
 			}
 		}
 		
@@ -958,6 +860,31 @@ namespace SqlDataMapper
 			                };
 						  
 			foreach(var select in deletes)
+			{
+				string id = select.id.Trim();
+				string value = select.value.Trim();
+				string cl = select.cl.Trim();
+
+				AddStatement(id, new Statement { statement = value, classname = cl });
+			}
+		}
+
+		/// <summary>
+		/// Load all fragment statements out of the given xml file.
+		/// </summary>
+		/// <param name="doc">The document that contains the statements</param>
+		private void LoadSegments(XDocument doc)
+		{
+			//get all delete statements
+			var deletes = from query in doc.Element("sqlMap").Elements("segment")
+						  select new
+						  {
+							  id = query.Attribute("id").Value,
+							  cl = query.Attribute("class").Value,
+							  value = query.Value
+						  };
+
+			foreach (var select in deletes)
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();

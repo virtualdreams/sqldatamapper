@@ -76,7 +76,6 @@ namespace SqlDataMapper
 		/// <returns>Returns true if key/value added</returns>
 		public bool Add(string key, object value)
 		{
-			//TODO - check key definition
 			if (!m_Parameters.Contains(key))
 			{
 				m_Parameters.Add(key, value);

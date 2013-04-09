@@ -58,8 +58,8 @@ namespace SqlDataMapper.Test
 			mapper.AddStatement("select1", "select * from test");
 			mapper.AddStatement("select2", "select * from value");
 			
-			Assert.AreEqual("select * from test", mapper.GetStatementRaw("select1"));
-			Assert.AreEqual("select * from value", mapper.GetStatementRaw("select2"));
+			Assert.AreEqual("select * from test", mapper.GetStatement("select1"));
+			Assert.AreEqual("select * from value", mapper.GetStatement("select2"));
 		}
 		
 		[Test(Description="Throw exception on multiple id")]
@@ -84,7 +84,7 @@ namespace SqlDataMapper.Test
 		public void TestGetStatementRawThrowException()
 		{
 			SqlMapper mapper = new SqlMapper();
-			string query = mapper.GetStatementRaw("select1");
+			string query = mapper.GetStatement("select1");
 		}
 
 		[Test(Description = "Create sql query from pool")]
