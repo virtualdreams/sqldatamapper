@@ -10,9 +10,9 @@ namespace SqlDataMapper.Test
 	[TestFixture]
 	class Test_SqlMapper
 	{
-		private string assemblyName = "System.Data.SQLite";
-		private string connectionClass = "System.Data.SQLite.SQLiteConnection";
-		private string connectionString = "Data Source=sqlite.db; Version=3;";
+		//private string assemblyName = "System.Data.SQLite";
+		//private string connectionClass = "System.Data.SQLite.SQLiteConnection";
+		//private string connectionString = "Data Source=sqlite.db; Version=3;";
 		
 		public Test_SqlMapper()
 		{
@@ -31,19 +31,19 @@ namespace SqlDataMapper.Test
 			SqlMapper mapper = new SqlMapper();
 		}
 		
-		[Test(Description="Create custom empty instance")]
-		public void TestCreateCustomEmptyInstance()
-		{
-			ISqlProvider provider = new SqlProvider(assemblyName, connectionClass, connectionString);
-			SqlMapper mapper = new SqlMapper(provider);
-		}
+		//[Test(Description="Create custom empty instance")]
+		//public void TestCreateCustomEmptyInstance()
+		//{
+		//    ISqlProvider provider = new SqlProvider(assemblyName, connectionClass, connectionString);
+		//    SqlMapper mapper = new SqlMapper(provider);
+		//}
 		
-		[Test(Description="Create custom instance")]
-		public void TestCreateCustomInstance()
-		{
-			ISqlProvider provider = new SqlProvider(assemblyName, connectionClass, connectionString);
-			SqlMapper mapper = new SqlMapper(provider, "./query.xml");
-		}
+		//[Test(Description="Create custom instance")]
+		//public void TestCreateCustomInstance()
+		//{
+		//    ISqlProvider provider = new SqlProvider(assemblyName, connectionClass, connectionString);
+		//    SqlMapper mapper = new SqlMapper(provider, "./query.xml");
+		//}
 		
 		[Test(Description="Create instance out of custom config")]
 		public void TestCreateCunstomInstanceFromConfig()

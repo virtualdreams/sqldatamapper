@@ -108,13 +108,13 @@ namespace SqlDataMapper
 			}
 		}
 		
-		/// <summary>
-		/// Escape special chars
-		/// </summary>
-        public string Escape(string str)
-        {
-            return str.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "\\\"");
-        }
+		///// <summary>
+		///// Escape special chars
+		///// </summary>
+		//public string Escape(string str)
+		//{
+		//    return str.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "\\\"");
+		//}
         
         /// <summary>
         /// Select a single object from the database.

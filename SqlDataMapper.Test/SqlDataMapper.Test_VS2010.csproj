@@ -53,7 +53,7 @@
     <Content Include="SqlMapperConfig.xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SqlDataMapper\SqlDataMapper.csproj">
+    <ProjectReference Include="..\SqlDataMapper\SqlDataMapper_VS2010.csproj">
       <Project>{17647789-C475-4B42-9227-AB04EBE73BF5}</Project>
       <Name>SqlDataMapper</Name>
     </ProjectReference>

@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="ISqlProvider.cs" />
     <Compile Include="ISqlQuery.cs" />
+    <Compile Include="SqlContext.cs" />
     <Compile Include="SqlDataMapperException.cs" />
     <Compile Include="SqlMapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

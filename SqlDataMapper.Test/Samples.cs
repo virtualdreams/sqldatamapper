@@ -32,39 +32,46 @@ namespace SqlDataMapper.Test
 		
 		public Samples()
 		{
-			string assemblyName = "System.Data.SQLite";
-			string connectionClass = "System.Data.SQLite.SQLiteConnection";
-			string connectionString = "Data Source=sqlite.db; Version=3;";
+			//string assemblyName = "System.Data.SQLite";
+			//string connectionClass = "System.Data.SQLite.SQLiteConnection";
+			//string connectionString = "Data Source=sqlite.db; Version=3;";
 			
-			ISqlProvider provider = new SqlProvider(assemblyName, connectionClass, connectionString);
+			//ISqlProvider provider = new SqlProvider(assemblyName, connectionClass, connectionString);
 			
-			_dal = new SqlMapper(provider);
+			//_dal = new SqlMapper(provider);
+			_dal = new SqlMapper("./SqlMapperConfig.xml");
 		}
 		
 		public int CreateTableIfNotExists()
 		{
 			_dal.AddStatement("createTable", "CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY, name TEXT, date DATETIME, content TEXT, contentid INTEGER, comments TEXT);");
 			
+			SqlContext ctx = _dal.CreateContext();
+			
 			int res = 0;
-			res = _dal.Update(_dal.CreateQuery("createTable"));
+			res = ctx.Update(_dal.CreateQuery("createTable"));
 			return res;
 		}
 		
 		public int Insert()
 		{
 			_dal.AddStatement("insertData", "insert into test (name, date, content, contentid, comments) values(#name#, #date#, #content#, #contentid#, #comments#)");
+
+			SqlContext ctx = _dal.CreateContext();
 			
 			SqlQuery query = _dal.CreateQuery("insertData");
 			query.SetDateTime("date", DateTime.Now).SetEntity("name", "Test").SetEntity("contentid", 10).SetEntity("content", null).SetEntity("comments", null);
 			
 			int res = 0;
-			res = _dal.Insert(query);
+			res = ctx.Insert(query);
 			return res;
 		}
 		
 		public int Update()
 		{
 			SqlQuery query = new SqlQuery("update test set content = #content#, comments = #comments#, date = #date# where contentid = 10");
+
+			SqlContext ctx = _dal.CreateContext();
 			
 			SqlParameter paramter = new SqlParameter();
 			paramter.Add("content", "some new content");
@@ -74,21 +81,25 @@ namespace SqlDataMapper.Test
 			query.SetEntities(paramter);
 			
 			int res = 0;
-			res = _dal.Update(query);
+			res = ctx.Update(query);
 			return res;
 		}
 		
 		public int Get()
 		{
 			SqlQuery query = SqlQuery.CreateQuery("select * from test");
+
+			SqlContext ctx = _dal.CreateContext();
 			
-			List<TestTable> table = _dal.QueryForList<TestTable>(query);
+			List<TestTable> table = ctx.QueryForList<TestTable>(query);
 			
 			return table.Count;	
 		}
 		
 		public int Dynamic()
 		{
+			SqlContext ctx = _dal.CreateContext();
+			
 			string[] terms = { "Test", "Hello", "World" };
 			
 			_dal.AddStatement("searchBase", "select * from test where name like #name#");
@@ -105,7 +116,7 @@ namespace SqlDataMapper.Test
 				len++;
 			}
 			
-			List<TestTable> table = _dal.QueryForList<TestTable>(query);
+			List<TestTable> table = ctx.QueryForList<TestTable>(query);
 			
 			return table.Count;
 		}
@@ -135,10 +146,13 @@ namespace SqlDataMapper.Test
 		
 		public void Exception()
 		{
-			_dal.ParameterCheck = true;
+			SqlContext ctx = _dal.CreateContext();
+			
+			//_dal.ParameterCheck = true;
 			_dal.AddStatement("exception", "select * from table where contentid = #contentid#");
 			
-			_dal.QueryForList<TestTable>(_dal.CreateQuery("exception"));
+			ctx.ParameterCheck = true;
+			ctx.QueryForList<TestTable>(_dal.CreateQuery("exception"));
 		}
 	}
 

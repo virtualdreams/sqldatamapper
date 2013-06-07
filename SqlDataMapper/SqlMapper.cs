@@ -11,7 +11,6 @@ using System.Collections;
 using System.Xml.Schema;
 using System.IO;
 using System.Reflection;
-//using System.Web;
 using System.Diagnostics;
 
 namespace SqlDataMapper
@@ -21,12 +20,11 @@ namespace SqlDataMapper
 	/// </summary>
 	public class SqlMapper
 	{
-		private ISqlProvider m_Provider = null;
 		private HybridDictionary m_Statements = new HybridDictionary();
 		private HybridDictionary m_Providers = new HybridDictionary();
-		private bool m_IsTransactionSession = false;
-		private bool m_ParameterCheck = false;
 		private bool m_ValidationCheck = false;
+		private string _defaultProvider = null;
+		private string _defaultConnectionString = null;
 		
 		#region Structures
 		private struct Statement
@@ -43,21 +41,6 @@ namespace SqlDataMapper
 		#endregion
 		
 		#region Validation methods
-		
-		/// <summary>
-		/// Enable or disable parameter check after replace
-		/// </summary>
-		public bool ParameterCheck
-		{
-			get
-			{
-				return m_ParameterCheck;
-			}
-			set
-			{
-				m_ParameterCheck = value;
-			}
-		}
 		
 		/// <summary>
 		/// Enable or disable xml validation.
@@ -111,34 +94,34 @@ namespace SqlDataMapper
 			LoadConfiguration(configXml);
 		}
 		
-		/// <summary>
-		/// Constructor for non auto configurarion. Instantiate your own provider. This instance has no statements and must filled manually or with embeded statements.
-		/// </summary>
-		/// <param name="provider">The provider <ref>SqlProvider</ref> or your own <ref>ISqlProvider</ref></param>
-		public SqlMapper(ISqlProvider provider)
-		{
-			if(provider == null)
-				throw new ArgumentNullException("provider");
+		///// <summary>
+		///// Constructor for non auto configuration. Instantiate your own provider. This instance has no statements and must filled manually or with embeded statements.
+		///// </summary>
+		///// <param name="provider">The provider <ref>SqlProvider</ref> or your own <ref>ISqlProvider</ref></param>
+		//public SqlMapper(ISqlProvider provider)
+		//{
+		//    if(provider == null)
+		//        throw new ArgumentNullException("provider");
 				
-			m_Provider = provider;
-		}
+		//    m_Provider = provider;
+		//}
 
-		/// <summary>
-		/// Constructor for non auto configuration. Instantiate your own provider an load your own mappings.
-		/// </summary>
-		/// <param name="provider">The provider <ref>SqlProvider</ref> or your own <ref>ISqlProvider</ref></param>
-		/// <param name="mappingXml">The xml file containing the xml statements</param>
-		public SqlMapper(ISqlProvider provider, string mappingXml)
-		{
-			if(provider == null)
-				throw new ArgumentNullException("provider");
+		///// <summary>
+		///// Constructor for non auto configuration. Instantiate your own provider an load your own mappings.
+		///// </summary>
+		///// <param name="provider">The provider <ref>SqlProvider</ref> or your own <ref>ISqlProvider</ref></param>
+		///// <param name="mappingXml">The xml file containing the xml statements</param>
+		//public SqlMapper(ISqlProvider provider, string mappingXml)
+		//{
+		//    if(provider == null)
+		//        throw new ArgumentNullException("provider");
 				
-			if(String.IsNullOrEmpty(mappingXml))
-				throw new ArgumentNullException("mappingXml");
+		//    if(String.IsNullOrEmpty(mappingXml))
+		//        throw new ArgumentNullException("mappingXml");
 
-			m_Provider = provider;
-			LoadMappings(mappingXml);
-		}
+		//    m_Provider = provider;
+		//    LoadMappings(mappingXml);
+		//}
 		
 		#endregion
 
@@ -194,7 +177,7 @@ namespace SqlDataMapper
 		/// Load the mappings xml file.
 		/// </summary>
 		/// <param name="filename">The xml file contains the statements</param>
-		public void LoadMappings(string filename)
+		public void LoadQueries(string filename)
 		{
 			try
 			{
@@ -232,7 +215,7 @@ namespace SqlDataMapper
 			//Load providers
 			LoadProviders(providers);
 			
-			//Load mappings
+			//Load sql queries
 			var maps = from map in doc.Element("sqlMapConfig").Element("sqlMaps").Elements("sqlMap")
 					   select new
 					   {
@@ -243,12 +226,11 @@ namespace SqlDataMapper
 			{
 			    string file = map.file.Trim();
 
-			    LoadMappings(file);
+			    LoadQueries(file);
 			}
 			
-			Provider provider = GetProvider(providerName);
-			
-			m_Provider = new SqlProvider(provider.assemblyName, provider.connectionClass, connectionString);
+			_defaultProvider = providerName;
+			_defaultConnectionString = connectionString;
 		}
 		
 		/// <summary>
@@ -363,7 +345,7 @@ namespace SqlDataMapper
 		public string GetStatement(string id)
 		{
 			if(String.IsNullOrEmpty(id))
-				throw new ArgumentException("The parameter must contain an id.", "id");
+				throw new ArgumentNullException("id");
 			
 			//get statement from pool
 			if (!m_Statements.Contains(id))
@@ -396,317 +378,58 @@ namespace SqlDataMapper
 			t.Set(GetStatement(id));
 			return t;
 		}
-		
-		#endregion
-		
-		#region Sql methods
-		
+
 		/// <summary>
-		/// Begins a database transaction.
+		/// Create a new context using the default provider from configuration.
 		/// </summary>
-		/// <remarks>
-		/// The method opens a connection to the datebase. The connection will closed through <c>CommitTransaction</c> or <c>RollbackTransaction</c>.
-		/// </remarks>
-		public void BeginTransaction()
+		public SqlContext CreateContext()
 		{
-			if(m_IsTransactionSession)
-			{
-				throw new SqlDataMapperException("SqlMapper could not invoke BeginTransaction(). A transaction is already started. Call CommitTransaction() or RollbackTransaction() first.");
-			}
-			
-			try
-			{
-				m_Provider.Open();
-				m_IsTransactionSession = true;
-				m_Provider.BeginTransaction();
-			}
-			catch(Exception ex)
-			{
-				m_Provider.Close();
-				m_IsTransactionSession = false;
-				throw ex;
-			}
+			if (String.IsNullOrEmpty(_defaultProvider))
+				throw new SqlDataMapperException("No default provider configured.");
+
+			if (String.IsNullOrEmpty(_defaultConnectionString))
+				throw new SqlDataMapperException("No default connection string configured.");
+
+			return CreateContext(_defaultProvider, _defaultConnectionString);
 		}
 		
 		/// <summary>
-		/// Commits the database transaction.
+		/// Create a new context using custom provider and connection string.
 		/// </summary>
-		/// <remarks>
-		/// The connection will closed.
-		/// </remarks>
-		public void CommitTransaction()
+		/// <param name="id">A provider from configuration</param>
+		/// <param name="connectionString">Custom connection string.</param>
+		public SqlContext CreateContext(string id, string connectionString)
 		{
-			if(!m_IsTransactionSession)
-			{
-				throw new SqlDataMapperException("SqlMapper could not invoke CommitTransaction(). No transaction was started. Call BeginTransaction() first.");
-			}
-			
-			try
-			{
-				m_Provider.CommitTransaction();
-			}
-			catch(Exception ex)
-			{
-				try
-				{
-					m_Provider.RollbackTransaction();
-				}
-				catch (Exception iex)
-				{
-					throw iex;
-				}
-				throw ex;
-			}
-			finally
-			{
-				m_IsTransactionSession = false;
-				m_Provider.Close();
-			}
+			if (String.IsNullOrEmpty(id))
+				throw new ArgumentNullException("id");
+
+			if (String.IsNullOrEmpty(connectionString))
+				throw new ArgumentNullException("connectionString");
+
+			Provider provider = GetProvider(id);
+			return new SqlContext(provider.assemblyName, provider.connectionClass, connectionString);
 		}
 		
-		/// <summary>
-		/// Rolls back a transaction from a pending state.
-		/// </summary>
-		/// <remarks>
-		/// The connection will closed.
-		/// </remarks>
-		public void RollbackTransaction()
-		{
-			if(!m_IsTransactionSession)
-			{
-				throw new SqlDataMapperException("SqlMapper could not invoke CommitTransaction(). No transaction was started. Call BeginTransaction() first.");
-			}
-			
-			try
-			{
-				m_Provider.RollbackTransaction();
-			}
-			catch(Exception ex)
-			{
-				throw ex;
-			}
-			finally
-			{
-				m_IsTransactionSession = false;
-				m_Provider.Close();
-			}
-		}
-		
-		/// <summary>
-		/// Executes a sql select statement that returns data to populate a single object instance.
-		/// </summary>
-		/// <typeparam name="T">The object type</typeparam>
-		/// <param name="query">The query object</param>
-		/// <returns>A single object</returns>
-		public T QueryForObject<T>(ISqlQuery query)
-		{
-			bool flag = false;
-			try
-			{
-				if(!m_IsTransactionSession)
-				{
-					m_Provider.Open();
-					flag = true;
-				}
-
-				//TODO: Statement class?
-				return m_Provider.Select<T>(query.Check(this.ParameterCheck).QueryString);
-			}
-			catch(Exception ex)
-			{
-				throw ex;
-			}
-			finally
-			{
-				if(flag)
-				{
-					m_Provider.Close();
-				}
-			}
-		}
-
-		/// <summary>
-		/// Executes a sql select statement that returns data to populate a number of result objects.
-		/// </summary>
-		/// <typeparam name="T">The object type</typeparam>
-		/// <param name="query">The query object</param>
-		/// <returns>A list ob objects</returns>
-		public List<T> QueryForList<T>(ISqlQuery query)
-		{
-			bool flag = false;
-			try
-			{
-				if (!m_IsTransactionSession)
-				{
-					m_Provider.Open();
-					flag = true;
-				}
-
-				//TODO: Statement class?
-				return m_Provider.SelectList<T>(query.Check(this.ParameterCheck).QueryString);
-			}
-			catch(Exception ex)
-			{
-				throw ex;
-			}
-			finally
-			{
-				if(flag)
-				{
-					m_Provider.Close();
-				}
-			}
-		}
-		
-		/// <summary>
-		/// Executes a sql select statement that returns a single value.
-		/// </summary>
-		/// <typeparam name="T">The object</typeparam>
-		/// <param name="query">The query object</param>
-		/// <returns>A single object</returns>
-		public T QueryForScalar<T>(ISqlQuery query)
-		{
-			bool flag = false;
-			try
-			{
-				if (!m_IsTransactionSession)
-				{
-					m_Provider.Open();
-					flag = true;
-				}
-				
-				//TODO: Statement class?
-				return m_Provider.SelectScalar<T>(query.Check(this.ParameterCheck).QueryString);
-			}
-			catch (Exception ex)
-			{
-				throw ex;
-			}
-			finally
-			{
-				if(flag)
-				{
-					m_Provider.Close();
-				}
-			}
-		}
-
-		/// <summary>
-		/// Executes a sql insert statement.
-		/// </summary>
-		/// <param name="query">The query object</param>
-		/// <returns>The affected rows</returns>
-		public int Insert(ISqlQuery query)
-		{
-			bool flag = false;
-			try
-			{
-				if (!m_IsTransactionSession)
-				{
-					m_Provider.Open();
-					flag = true;
-				}
-
-				//TODO: Statement class?
-				return m_Provider.Insert(query.Check(this.ParameterCheck).QueryString);
-			}
-			catch (Exception ex)
-			{
-				throw ex;
-			}
-			finally
-			{
-				if(flag)
-				{
-					m_Provider.Close();
-				}
-			}
-		}
-
-		/// <summary>
-		/// Executes a sql update statement.
-		/// </summary>
-		/// <param name="query">The query object</param>
-		/// <returns>The affected rows</returns>
-		public int Update(ISqlQuery query)
-		{
-			bool flag = false;
-			try
-			{
-				if (!m_IsTransactionSession)
-				{
-					m_Provider.Open();
-					flag = true;
-				}
-
-				//TODO: Statement class?
-				return m_Provider.Update(query.Check(this.ParameterCheck).QueryString);
-			}
-			catch (Exception ex)
-			{
-				throw ex;
-			}
-			finally
-			{
-				if(flag)
-				{
-					m_Provider.Close();
-				}
-			}
-		}
-
-		/// <summary>
-		/// Executes a sql delete statement.
-		/// </summary>
-		/// <param name="query">The query object</param>
-		/// <returns>The affected rows</returns>
-		public int Delete(ISqlQuery query)
-		{
-			bool flag = false;
-			try
-			{
-				if (!m_IsTransactionSession)
-				{
-					m_Provider.Open();
-					flag = true;
-				}
-
-				//TODO: Statement class?
-				return m_Provider.Delete(query.Check(this.ParameterCheck).QueryString);
-			}
-			catch (Exception ex)
-			{
-				throw ex;
-			}
-			finally
-			{
-				if(flag)
-				{
-					m_Provider.Close();
-				}
-			}
-		}
-
 		#endregion
 		
 		#region Internal methods
-		
-		/// <summary>
-		/// The class type must match with provided class name from the sql map
-		/// </summary>
-		private void CheckClassType()
-		{
+
+		///// <summary>
+		///// The class type must match with provided class name from the sql map
+		///// </summary>
+		//private void CheckClassType()
+		//{
 		//    if (!String.Equals(typeof(T).FullName, GetClassname(id)))
 		//    {
 		//        throw new Exception(String.Format("The class type '{0}' doesn't match with statement provided class type '{1}'", typeof(T).GetType().FullName, GetClassname(id)));
 		//    }
-		}
-	
+		//}
+
 		/// <summary>
 		/// Get the associated classname for the provided statement.
 		/// </summary>
 		/// <param name="id">The id that identifies the statement</param>
-		/// <returns>Return the full qualified classname for statement</returns>
+		/// <returns>Return the associated classname</returns>
 		private string GetClassname(string id)
 		{
 			if (!m_Statements.Contains(id))
@@ -909,7 +632,7 @@ namespace SqlDataMapper
 			foreach(var select in include)
 			{
 				string file = select.file.Trim();
-				LoadMappings(file);
+				LoadQueries(file);
 			}
 		}
 		#endregion
