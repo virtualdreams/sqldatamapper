@@ -2,9 +2,9 @@
 <sqlMap>
 	<select id="test" class="">
 		<![CDATA[
-		select 
-			* 
-		from 
+		select
+			*
+		from
 			test
 		]]>
 	</select>

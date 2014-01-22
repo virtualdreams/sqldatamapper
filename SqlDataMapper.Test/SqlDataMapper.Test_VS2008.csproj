@@ -52,6 +52,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Test_SqlContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Test_SqlQuery.cs" />
     <Compile Include="Samples.cs" />

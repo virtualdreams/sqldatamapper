@@ -92,8 +92,9 @@ namespace SqlDataMapper.Test
 		{
 			SqlMapper mapper = new SqlMapper();
 			SqlQuery query = mapper.CreateQuery("test");
-			
-			Assert.AreEqual("select * from test", query.QueryString);
+
+            Assert.AreEqual("select\n\t\t\t*\n\t\tfrom\n\t\t\ttest", query.QueryString);
+            //Assert.AreEqual("select * from test", query.QueryString);
 		}
 	}
 }

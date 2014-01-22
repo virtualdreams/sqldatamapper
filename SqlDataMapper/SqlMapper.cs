@@ -30,7 +30,7 @@ namespace SqlDataMapper
 		private struct Statement
 		{
 			public string statement;
-			public string classname;
+			//public string classname;
 		};
 
 		private struct Provider
@@ -425,20 +425,20 @@ namespace SqlDataMapper
 		//    }
 		//}
 
-		/// <summary>
-		/// Get the associated classname for the provided statement.
-		/// </summary>
-		/// <param name="id">The id that identifies the statement</param>
-		/// <returns>Return the associated classname</returns>
-		private string GetClassname(string id)
-		{
-			if (!m_Statements.Contains(id))
-			{
-				throw new Exception(String.Format("This sql map does not contain a statement named '{0}'", id));
-			}
-			Statement st = (Statement)m_Statements[id];
-			return st.classname;
-		}
+        ///// <summary>
+        ///// Get the associated classname for the provided statement.
+        ///// </summary>
+        ///// <param name="id">The id that identifies the statement</param>
+        ///// <returns>Return the associated classname</returns>
+        //private string GetClassname(string id)
+        //{
+        //    if (!m_Statements.Contains(id))
+        //    {
+        //        throw new Exception(String.Format("This sql map does not contain a statement named '{0}'", id));
+        //    }
+        //    Statement st = (Statement)m_Statements[id];
+        //    return st.classname;
+        //}
 
 		/// <summary>
 		/// Add a user defined statement to the statement pool.
@@ -447,7 +447,7 @@ namespace SqlDataMapper
 		/// <param name="statement">The object contains the statement informations</param>
 		public void AddStatement(string id, string statement)
 		{
-			this.AddStatement(id, new Statement{ statement = statement, classname = "" });
+			this.AddStatement(id, new Statement{ statement = statement /*, classname = ""*/ });
 		}
 
 		/// <summary>
@@ -458,7 +458,7 @@ namespace SqlDataMapper
 		/// <param name="classname">A string contains the classname</param>
 		public void AddStatement(string id, string statement, string classname)
 		{
-			this.AddStatement(id, new Statement { statement = statement, classname = classname });
+			this.AddStatement(id, new Statement { statement = statement /*, classname = classname*/ });
 		}
 		
 		/// <summary>
@@ -503,7 +503,7 @@ namespace SqlDataMapper
 							select new 
 							{
 								id = query.Attribute("id").Value,
-								cl = query.Attribute("class").Value,
+								//cl = query.Attribute("class").Value,
 								value = query.Value
 							};
 						  
@@ -511,9 +511,9 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				string cl = select.cl.Trim();
+				//string cl = select.cl.Trim();
 				
-				AddStatement(id, new Statement { statement = value, classname = cl });
+				AddStatement(id, new Statement { statement = value /*, classname = cl*/ });
 			}
 		}
 		
@@ -528,7 +528,7 @@ namespace SqlDataMapper
 			                select new 
 			                {
 			                    id = query.Attribute("id").Value,
-								cl = query.Attribute("class").Value,
+								//cl = query.Attribute("class").Value,
 			                    value = query.Value
 			                };
 						  
@@ -536,9 +536,9 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				string cl = select.cl.Trim();
+				//string cl = select.cl.Trim();
 
-				AddStatement(id, new Statement { statement = value, classname = cl });
+				AddStatement(id, new Statement { statement = value /*, classname = cl*/ });
 			}
 		}
 		
@@ -553,7 +553,7 @@ namespace SqlDataMapper
 			                select new 
 			                {
 			                    id = query.Attribute("id").Value,
-								cl = query.Attribute("class").Value,
+								//cl = query.Attribute("class").Value,
 			                    value = query.Value
 			                };
 						  
@@ -561,9 +561,9 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				string cl = select.cl.Trim();
+				//string cl = select.cl.Trim();
 
-				AddStatement(id, new Statement { statement = value, classname = cl });
+				AddStatement(id, new Statement { statement = value /*, classname = cl*/ });
 			}
 		}
 		
@@ -578,7 +578,7 @@ namespace SqlDataMapper
 			                select new 
 			                {
 			                    id = query.Attribute("id").Value,
-								cl = query.Attribute("class").Value,
+								//cl = query.Attribute("class").Value,
 			                    value = query.Value
 			                };
 						  
@@ -586,9 +586,9 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				string cl = select.cl.Trim();
+				//string cl = select.cl.Trim();
 
-				AddStatement(id, new Statement { statement = value, classname = cl });
+				AddStatement(id, new Statement { statement = value /*, classname = cl*/ });
 			}
 		}
 
@@ -603,7 +603,7 @@ namespace SqlDataMapper
 						  select new
 						  {
 							  id = query.Attribute("id").Value,
-							  cl = query.Attribute("class").Value,
+							  //cl = query.Attribute("class").Value,
 							  value = query.Value
 						  };
 
@@ -611,9 +611,9 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				string cl = select.cl.Trim();
+				//string cl = select.cl.Trim();
 
-				AddStatement(id, new Statement { statement = value, classname = cl });
+				AddStatement(id, new Statement { statement = value /*, classname = cl*/ });
 			}
 		}
 		

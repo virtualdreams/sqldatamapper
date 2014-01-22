@@ -425,14 +425,17 @@ namespace SqlDataMapper
 		/// <returns>A formatted sql string</returns>
 		private string Format(string query)
 		{
-			string tmp = query;
+            return query;
+            
+            //The formatting of a statement maybe destroy some variables. That's why is disabled.
+            //string tmp = query;
 
-			//remove spaces, comments and reformat the whole statement into a single line
-			tmp = Regex.Replace(tmp, @"(--.*)$", " ", RegexOptions.Multiline);
-			tmp = Regex.Replace(tmp, @"(/\*.*?\*/)", " ", RegexOptions.Singleline);
-			tmp = Regex.Replace(tmp.Replace('\r', ' ').Replace('\n', ' ').Replace("\r\n", " ").Replace('\t', ' '), @"\s{2,}", " ").Trim();
+            ////remove spaces, comments and reformat the whole statement into a single line
+            //tmp = Regex.Replace(tmp, @"(--.*)$", " ", RegexOptions.Multiline);
+            //tmp = Regex.Replace(tmp, @"(/\*.*?\*/)", " ", RegexOptions.Singleline);
+            //tmp = Regex.Replace(tmp.Replace('\r', ' ').Replace('\n', ' ').Replace("\r\n", " ").Replace('\t', ' '), @"\s{2,}", " ").Trim();
 
-			return tmp;
+            //return tmp;
 		}
 
 		/// <summary>

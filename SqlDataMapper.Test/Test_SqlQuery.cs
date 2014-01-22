@@ -184,17 +184,17 @@ namespace SqlDataMapper.Test
 			Assert.AreEqual("select * from values", query.QueryString);		
 		}
 		
-		[Test(Description="SqlQuery has a build in sql autoformatter...")]
-		public void TestAutoformatter()
-		{
-			string queryRaw1 = "select\n  * \n    from\ntest\n--\twhere t = 1\n\r  where v = /* v is not null,\nmust be one.. */  1/* and x  =   \t'100' */order by v  ";
-			string queryRaw2 = " \t\n,   x\tdesc  ";
+        //[Test(Description="SqlQuery has a build in sql autoformatter...")]
+        //public void TestAutoformatter()
+        //{
+        //    string queryRaw1 = "select\n  * \n    from\ntest\n--\twhere t = 1\n\r  where v = /* v is not null,\nmust be one.. */  1/* and x  =   \t'100' */order by v  ";
+        //    string queryRaw2 = " \t\n,   x\tdesc  ";
 			
-			SqlQuery query1 = new SqlQuery(queryRaw1);
-			SqlQuery query2 = query1.Add(queryRaw2);
+        //    SqlQuery query1 = new SqlQuery(queryRaw1);
+        //    SqlQuery query2 = query1.Add(queryRaw2);
 			
-			Assert.AreEqual("select * from test where v = 1 order by v", query1.QueryString);
-			Assert.AreEqual("select * from test where v = 1 order by v , x desc", query2.QueryString);
-		}
+        //    Assert.AreEqual("select * from test where v = 1 order by v", query1.QueryString);
+        //    Assert.AreEqual("select * from test where v = 1 order by v , x desc", query2.QueryString);
+        //}
 	}
 }
