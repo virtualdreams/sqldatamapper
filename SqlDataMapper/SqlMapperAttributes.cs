@@ -44,7 +44,7 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Returns null or the new alias for the database field name
 		/// </summary>
-		public string FieldName
+		public string Alias
 		{
 			get;
 			private set;
@@ -69,7 +69,7 @@ namespace SqlDataMapper
 			if(String.IsNullOrEmpty(fieldName))
 				throw new ArgumentNullException("fieldName");
 			
-			FieldName = fieldName;
+			Alias = fieldName;
 			Property = SqlMapperProperty.None;
 		}
 		
@@ -79,7 +79,7 @@ namespace SqlDataMapper
 		/// <param name="property">The property flag</param>
 		public SqlMapperAttributes(SqlMapperProperty property)
 		{
-			FieldName = null;
+			Alias = null;
 			Property = property;
 		}
 		
@@ -93,7 +93,7 @@ namespace SqlDataMapper
 			if (String.IsNullOrEmpty(fieldName))
 				throw new ArgumentNullException("fieldName");
 			
-			FieldName = fieldName;
+			Alias = fieldName;
 			Property = property;
 		}
 	}

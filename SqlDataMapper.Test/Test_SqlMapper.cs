@@ -28,7 +28,7 @@ namespace SqlDataMapper.Test
 		[Test(Description="Create zero config instance.")]
 		public void TestCreateDefaultInstance()
 		{
-			SqlMapper mapper = new SqlMapper();
+			SqlConfig mapper = new SqlConfig();
 		}
 		
 		//[Test(Description="Create custom empty instance")]
@@ -48,13 +48,13 @@ namespace SqlDataMapper.Test
 		[Test(Description="Create instance out of custom config")]
 		public void TestCreateCunstomInstanceFromConfig()
 		{
-			SqlMapper mapper = new SqlMapper("./SqlMapperConfig.xml");
+			SqlConfig mapper = new SqlConfig("./SqlMapperConfig.xml");
 		}
 		
 		[Test(Description="Add statements to object")]
 		public void TestAddStatements()
 		{
-			SqlMapper mapper = new SqlMapper();
+			SqlConfig mapper = new SqlConfig();
 			mapper.AddStatement("select1", "select * from test");
 			mapper.AddStatement("select2", "select * from value");
 			
@@ -66,7 +66,7 @@ namespace SqlDataMapper.Test
 		[ExpectedException(ExpectedException=typeof(SqlDataMapperException))]
 		public void TestAddStatementThrowException1()
 		{
-			SqlMapper mapper = new SqlMapper();
+			SqlConfig mapper = new SqlConfig();
 			mapper.AddStatement("select1", "select * from test");
 			mapper.AddStatement("select1", "select * from value");
 		}
@@ -75,7 +75,7 @@ namespace SqlDataMapper.Test
 		[ExpectedException(ExpectedException = typeof(SqlDataMapperException))]
 		public void TestAddStatementThrowException2()
 		{
-			SqlMapper mapper = new SqlMapper();
+			SqlConfig mapper = new SqlConfig();
 			mapper.AddStatement("test", "select * from test");
 		}
 
@@ -83,14 +83,14 @@ namespace SqlDataMapper.Test
 		[ExpectedException(ExpectedException = typeof(SqlDataMapperException))]
 		public void TestGetStatementRawThrowException()
 		{
-			SqlMapper mapper = new SqlMapper();
+			SqlConfig mapper = new SqlConfig();
 			string query = mapper.GetStatement("select1");
 		}
 
 		[Test(Description = "Create sql query from pool")]
 		public void TestCreateQuery()
 		{
-			SqlMapper mapper = new SqlMapper();
+			SqlConfig mapper = new SqlConfig();
 			SqlQuery query = mapper.CreateQuery("test");
 
             Assert.AreEqual("select\n\t\t\t*\n\t\tfrom\n\t\t\ttest", query.QueryString);

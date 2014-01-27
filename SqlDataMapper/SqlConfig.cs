@@ -16,9 +16,9 @@ using System.Diagnostics;
 namespace SqlDataMapper
 {
 	/// <summary>
-	/// The core class for sql mapping. It contains all necessary methods for easy interacting with sql servers.
+	/// The config class for sql mapping.
 	/// </summary>
-	public class SqlMapper
+	public class SqlConfig
 	{
 		private HybridDictionary m_Statements = new HybridDictionary();
 		private HybridDictionary m_Providers = new HybridDictionary();
@@ -30,7 +30,6 @@ namespace SqlDataMapper
 		private struct Statement
 		{
 			public string statement;
-			//public string classname;
 		};
 
 		private struct Provider
@@ -58,16 +57,15 @@ namespace SqlDataMapper
 				m_ValidationCheck = value;
 			}
 		}
-		
 		#endregion
 		
 		#region Constructors
 		
 		/// <summary>
 		/// Constructor for auto configuration (zeroconf).
-		/// Searchs for <c>SqlMapperConfig.xml</c> file, otherwise throws an excpetion.
+		/// Searchs for <c>SqlMapperConfig.xml</c> file, otherwise throws an exception.
 		/// </summary>
-		public SqlMapper()
+		public SqlConfig()
 		{
 			string file = ConvertToFullPath("SqlMapperConfig.xml");
 			
@@ -85,44 +83,14 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Constructor for auto configuration.
 		/// </summary>
-		/// <param name="configXml">The configuration file</param>
-		public SqlMapper(string configXml)
+		/// <param name="config">The configuration file</param>
+		public SqlConfig(string config)
 		{
-			if(String.IsNullOrEmpty(configXml))
-				throw new ArgumentNullException("configXml");
+			if(String.IsNullOrEmpty(config))
+				throw new ArgumentNullException("config");
 			
-			LoadConfiguration(configXml);
+			LoadConfiguration(config);
 		}
-		
-		///// <summary>
-		///// Constructor for non auto configuration. Instantiate your own provider. This instance has no statements and must filled manually or with embeded statements.
-		///// </summary>
-		///// <param name="provider">The provider <ref>SqlProvider</ref> or your own <ref>ISqlProvider</ref></param>
-		//public SqlMapper(ISqlProvider provider)
-		//{
-		//    if(provider == null)
-		//        throw new ArgumentNullException("provider");
-				
-		//    m_Provider = provider;
-		//}
-
-		///// <summary>
-		///// Constructor for non auto configuration. Instantiate your own provider an load your own mappings.
-		///// </summary>
-		///// <param name="provider">The provider <ref>SqlProvider</ref> or your own <ref>ISqlProvider</ref></param>
-		///// <param name="mappingXml">The xml file containing the xml statements</param>
-		//public SqlMapper(ISqlProvider provider, string mappingXml)
-		//{
-		//    if(provider == null)
-		//        throw new ArgumentNullException("provider");
-				
-		//    if(String.IsNullOrEmpty(mappingXml))
-		//        throw new ArgumentNullException("mappingXml");
-
-		//    m_Provider = provider;
-		//    LoadMappings(mappingXml);
-		//}
-		
 		#endregion
 
 		#region Configuration methods
@@ -414,32 +382,6 @@ namespace SqlDataMapper
 		
 		#region Internal methods
 
-		///// <summary>
-		///// The class type must match with provided class name from the sql map
-		///// </summary>
-		//private void CheckClassType()
-		//{
-		//    if (!String.Equals(typeof(T).FullName, GetClassname(id)))
-		//    {
-		//        throw new Exception(String.Format("The class type '{0}' doesn't match with statement provided class type '{1}'", typeof(T).GetType().FullName, GetClassname(id)));
-		//    }
-		//}
-
-        ///// <summary>
-        ///// Get the associated classname for the provided statement.
-        ///// </summary>
-        ///// <param name="id">The id that identifies the statement</param>
-        ///// <returns>Return the associated classname</returns>
-        //private string GetClassname(string id)
-        //{
-        //    if (!m_Statements.Contains(id))
-        //    {
-        //        throw new Exception(String.Format("This sql map does not contain a statement named '{0}'", id));
-        //    }
-        //    Statement st = (Statement)m_Statements[id];
-        //    return st.classname;
-        //}
-
 		/// <summary>
 		/// Add a user defined statement to the statement pool.
 		/// </summary>
@@ -448,17 +390,6 @@ namespace SqlDataMapper
 		public void AddStatement(string id, string statement)
 		{
 			this.AddStatement(id, new Statement{ statement = statement /*, classname = ""*/ });
-		}
-
-		/// <summary>
-		/// Add a user defined statement to the statement pool.
-		/// </summary>
-		/// <param name="id">The unique identifier for the statement</param>
-		/// <param name="statement">A string contains the statement</param>
-		/// <param name="classname">A string contains the classname</param>
-		public void AddStatement(string id, string statement, string classname)
-		{
-			this.AddStatement(id, new Statement { statement = statement /*, classname = classname*/ });
 		}
 		
 		/// <summary>
@@ -469,7 +400,7 @@ namespace SqlDataMapper
 		private void AddStatement(string id, Statement statement)
 		{
 			if(String.IsNullOrEmpty(id))
-				throw new ArgumentException("The id can't be null or an empty string.", "id");
+				throw new ArgumentNullException("id");
 			
 			if(m_Statements.Contains(id))
 			{
@@ -485,7 +416,10 @@ namespace SqlDataMapper
 		/// <param name="provider">The object contains the provider informations</param>
 		private void AddProvider(string id, Provider provider)
 		{
-			if (m_Providers.Contains(id))
+            if (String.IsNullOrEmpty(id))
+                throw new ArgumentNullException("id");
+            
+            if (m_Providers.Contains(id))
 			{
 				throw new SqlDataMapperException(String.Format("The provider pool already contains a provider named '{0}'", id));
 			}
@@ -503,7 +437,6 @@ namespace SqlDataMapper
 							select new 
 							{
 								id = query.Attribute("id").Value,
-								//cl = query.Attribute("class").Value,
 								value = query.Value
 							};
 						  
@@ -511,9 +444,8 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				//string cl = select.cl.Trim();
 				
-				AddStatement(id, new Statement { statement = value /*, classname = cl*/ });
+				AddStatement(id, new Statement { statement = value });
 			}
 		}
 		
@@ -528,7 +460,6 @@ namespace SqlDataMapper
 			                select new 
 			                {
 			                    id = query.Attribute("id").Value,
-								//cl = query.Attribute("class").Value,
 			                    value = query.Value
 			                };
 						  
@@ -536,9 +467,8 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				//string cl = select.cl.Trim();
 
-				AddStatement(id, new Statement { statement = value /*, classname = cl*/ });
+				AddStatement(id, new Statement { statement = value });
 			}
 		}
 		
@@ -553,7 +483,6 @@ namespace SqlDataMapper
 			                select new 
 			                {
 			                    id = query.Attribute("id").Value,
-								//cl = query.Attribute("class").Value,
 			                    value = query.Value
 			                };
 						  
@@ -561,9 +490,8 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				//string cl = select.cl.Trim();
 
-				AddStatement(id, new Statement { statement = value /*, classname = cl*/ });
+				AddStatement(id, new Statement { statement = value });
 			}
 		}
 		
@@ -578,7 +506,6 @@ namespace SqlDataMapper
 			                select new 
 			                {
 			                    id = query.Attribute("id").Value,
-								//cl = query.Attribute("class").Value,
 			                    value = query.Value
 			                };
 						  
@@ -586,9 +513,8 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				//string cl = select.cl.Trim();
 
-				AddStatement(id, new Statement { statement = value /*, classname = cl*/ });
+				AddStatement(id, new Statement { statement = value });
 			}
 		}
 
@@ -603,7 +529,6 @@ namespace SqlDataMapper
 						  select new
 						  {
 							  id = query.Attribute("id").Value,
-							  //cl = query.Attribute("class").Value,
 							  value = query.Value
 						  };
 
@@ -611,9 +536,8 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				//string cl = select.cl.Trim();
 
-				AddStatement(id, new Statement { statement = value /*, classname = cl*/ });
+				AddStatement(id, new Statement { statement = value });
 			}
 		}
 		

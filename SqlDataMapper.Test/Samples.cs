@@ -28,7 +28,7 @@ namespace SqlDataMapper.Test
 	
 	public class Samples
 	{
-		private readonly SqlMapper _dal;
+		private readonly SqlConfig _dal;
 		
 		public Samples()
 		{
@@ -39,7 +39,7 @@ namespace SqlDataMapper.Test
 			//ISqlProvider provider = new SqlProvider(assemblyName, connectionClass, connectionString);
 			
 			//_dal = new SqlMapper(provider);
-			_dal = new SqlMapper("./SqlMapperConfig.xml");
+			_dal = new SqlConfig("./SqlMapperConfig.xml");
 		}
 		
 		public int CreateTableIfNotExists()
