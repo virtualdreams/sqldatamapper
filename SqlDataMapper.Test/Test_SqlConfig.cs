@@ -8,13 +8,13 @@ using NUnit.Framework;
 namespace SqlDataMapper.Test
 {
 	[TestFixture]
-	class Test_SqlMapper
+	class Test_SqlConfig
 	{
 		//private string assemblyName = "System.Data.SQLite";
 		//private string connectionClass = "System.Data.SQLite.SQLiteConnection";
 		//private string connectionString = "Data Source=sqlite.db; Version=3;";
 		
-		public Test_SqlMapper()
+		public Test_SqlConfig()
 		{
 		
 		}
