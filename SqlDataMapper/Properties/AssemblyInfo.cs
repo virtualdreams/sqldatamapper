@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("stichelbiene.de")]
 [assembly: AssemblyProduct("SqlDataMapper")]
-[assembly: AssemblyCopyright("Copyright ©stichelbiene.de 2012")]
+[assembly: AssemblyCopyright("Copyright © stichelbiene.de 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
