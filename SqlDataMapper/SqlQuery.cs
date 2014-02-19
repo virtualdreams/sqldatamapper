@@ -264,6 +264,21 @@ namespace SqlDataMapper
 			return this;
 		}
 
+        /// <summary>
+        /// Set a single named parameter. The value must a decimal
+        /// </summary>
+        /// <param name="name">The named parameter</param>
+        /// <param name="value">The value</param>
+        /// <returns>This instance</returns>
+        public SqlQuery SetDecimal(string name, decimal value)
+        {
+            if (String.IsNullOrEmpty(name))
+				throw new ArgumentNullException("name");
+
+			this.QueryString = Replace(name, GetValue(value));
+			return this;
+        }
+
 		/// <summary>
 		/// Set a single named parameter. The value must a char
 		/// </summary>
