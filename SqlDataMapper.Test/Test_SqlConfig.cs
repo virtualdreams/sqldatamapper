@@ -30,20 +30,18 @@ namespace SqlDataMapper.Test
 		{
 			SqlConfig mapper = new SqlConfig();
 		}
-		
-		//[Test(Description="Create custom empty instance")]
-		//public void TestCreateCustomEmptyInstance()
-		//{
-		//    ISqlProvider provider = new SqlProvider(assemblyName, connectionClass, connectionString);
-		//    SqlMapper mapper = new SqlMapper(provider);
-		//}
-		
-		//[Test(Description="Create custom instance")]
-		//public void TestCreateCustomInstance()
-		//{
-		//    ISqlProvider provider = new SqlProvider(assemblyName, connectionClass, connectionString);
-		//    SqlMapper mapper = new SqlMapper(provider, "./query.xml");
-		//}
+
+        [Test(Description = "Create empty instance")]
+        public void TestCreateEmptyInstance()
+        {
+            SqlConfig mapper = new SqlConfig(true);
+        }
+
+        [Test(Description = "Create zero config instance (special)")]
+        public void TestCreateEmptyInstanceSpecial()
+        {
+            SqlConfig mapper = new SqlConfig(false);
+        }
 		
 		[Test(Description="Create instance out of custom config")]
 		public void TestCreateCunstomInstanceFromConfig()

@@ -66,19 +66,32 @@ namespace SqlDataMapper
 		/// Searchs for <c>SqlMapperConfig.xml</c> file, otherwise throws an exception.
 		/// </summary>
 		public SqlConfig()
-		{
-			string file = ConvertToFullPath("SqlMapperConfig.xml");
-			
-			FileInfo fi = new FileInfo(file);
-			if(fi.Exists)
-			{
-				LoadConfiguration(fi.FullName);
-			}
-			else
-			{
-				throw new SqlDataMapperException("Can't find 'SqlMapperConfig.xml' for autoconfiguration.");
-			}
-		}
+            :this(false)
+		{ }
+
+        /// <summary>
+        /// Constructor for auto configuration (zeroconf).
+        /// Searchs for <c>SqlMapperConfig.xml</c> file, otherwise throws an exception.
+        /// If createEmpty is set to true, an empty instance was created.
+        /// </summary>
+        /// <param name="createEmpty">Initialzes an empty instance or zeroconf</param>
+        public SqlConfig(bool createEmpty)
+        {
+            if (createEmpty)
+                return;
+            
+            string file = ConvertToFullPath("SqlMapperConfig.xml");
+
+            FileInfo fi = new FileInfo(file);
+            if (fi.Exists)
+            {
+                LoadConfiguration(fi.FullName);
+            }
+            else
+            {
+                throw new SqlDataMapperException("Can't find 'SqlMapperConfig.xml' for autoconfiguration.");
+            }
+        }
 		
 		/// <summary>
 		/// Constructor for auto configuration.
@@ -365,7 +378,7 @@ namespace SqlDataMapper
 		/// Create a new context using custom provider and connection string.
 		/// </summary>
 		/// <param name="id">A provider from configuration</param>
-		/// <param name="connectionString">Custom connection string.</param>
+		/// <param name="connectionString">Custom connection string</param>
 		public SqlContext CreateContext(string id, string connectionString)
 		{
 			if (String.IsNullOrEmpty(id))
