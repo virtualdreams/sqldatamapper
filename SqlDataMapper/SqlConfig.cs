@@ -173,7 +173,7 @@ namespace SqlDataMapper
 				LoadInserts(doc);
 				LoadUpdates(doc);
 				LoadDeletes(doc);
-				LoadSegments(doc);
+				LoadParts(doc);
 				LoadInclude(doc);
 			}
 			catch (Exception ex)
@@ -535,17 +535,17 @@ namespace SqlDataMapper
 		/// Load all fragment statements out of the given xml file.
 		/// </summary>
 		/// <param name="doc">The document that contains the statements</param>
-		private void LoadSegments(XDocument doc)
+		private void LoadParts(XDocument doc)
 		{
 			//get all delete statements
-			var deletes = from query in doc.Element("sqlMap").Elements("segment")
+			var parts = from query in doc.Element("sqlMap").Elements("part")
 						  select new
 						  {
 							  id = query.Attribute("id").Value,
 							  value = query.Value
 						  };
 
-			foreach (var select in deletes)
+			foreach (var select in parts)
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();

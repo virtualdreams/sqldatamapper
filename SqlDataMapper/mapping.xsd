@@ -43,7 +43,7 @@
             </xs:simpleContent>
           </xs:complexType>
         </xs:element>
-		    <xs:element minOccurs="0" maxOccurs="unbounded" name="segment">
+		    <xs:element minOccurs="0" maxOccurs="unbounded" name="part">
           <xs:complexType>
             <xs:simpleContent>
               <xs:extension base="xs:string">
