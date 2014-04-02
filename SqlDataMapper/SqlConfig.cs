@@ -402,7 +402,10 @@ namespace SqlDataMapper
 		/// <param name="statement">The object contains the statement informations</param>
 		public void AddStatement(string id, string statement)
 		{
-			this.AddStatement(id, new Statement{ statement = statement /*, classname = ""*/ });
+			if(String.IsNullOrEmpty(statement))
+				throw new ArgumentNullException("statement");
+			
+			this.AddStatement(id, new Statement{ statement = statement });
 		}
 		
 		/// <summary>
@@ -421,11 +424,30 @@ namespace SqlDataMapper
 			}
 			this.m_Statements.Add(id, statement);
 		}
+
+		/// <summary>
+		/// Add a user defined provider to the provider pool.
+		/// assemblyName like: MySql.Data
+		/// connectionClass like: MySql.Data.MySqlClient.MySqlConnection
+		/// </summary>
+		/// <param name="id">The unique identifier for the provider</param>
+		/// <param name="assemblyName">The assembly name.</param>
+		/// <param name="connectionClass">The connection class.</param>
+		public void AddProvider(string id, string assemblyName, string connectionClass)
+		{
+			if(String.IsNullOrEmpty(assemblyName))
+				throw new ArgumentNullException("assemblyName");
+
+			if(String.IsNullOrEmpty(connectionClass))
+				throw new ArgumentNullException("connectionClass");
+
+			this.AddProvider(id, new Provider { assemblyName = assemblyName, connectionClass = connectionClass });
+		}
 		
 		/// <summary>
 		/// Add a loaded provider to the provider pool.
 		/// </summary>
-		/// <param name="id">The unique identifier for the statement</param>
+		/// <param name="id">The unique identifier for the provider</param>
 		/// <param name="provider">The object contains the provider informations</param>
 		private void AddProvider(string id, Provider provider)
 		{
