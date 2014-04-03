@@ -281,6 +281,18 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
+		/// Get all provider ids from pool.
+		/// </summary>
+		/// <returns></returns>
+		public IEnumerable<string> GetProviders()
+		{
+			foreach(string key in m_Providers.Keys)
+			{
+				yield return key;
+			}
+		}
+
+		/// <summary>
 		/// Get the full path for the given filename.
 		/// </summary>
 		/// <param name="filename">The filename as file, absolute filepath or relative filepath</param>
@@ -335,6 +347,18 @@ namespace SqlDataMapper
 			}
 			Statement st = (Statement)m_Statements[id];
 			return st.statement;
+		}
+
+		/// <summary>
+		/// Get all statements ids from pool.
+		/// </summary>
+		/// <returns></returns>
+		public IEnumerable<string> GetStatments()
+		{
+			foreach (string key in m_Statements.Keys)
+			{
+				yield return key;
+			}
 		}
 		
 		/// <summary>
