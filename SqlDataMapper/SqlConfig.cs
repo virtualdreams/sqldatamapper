@@ -135,7 +135,7 @@ namespace SqlDataMapper
 		/// Load the providers xml file.
 		/// </summary>
 		/// <param name="filename">The xml file contains the provider informations</param>
-		private void LoadProviders(string filename)
+		public void LoadProviders(string filename)
 		{
 			try
 			{
