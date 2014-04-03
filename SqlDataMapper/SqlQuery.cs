@@ -78,7 +78,15 @@ namespace SqlDataMapper
 			return query.Add(queryToAdd);
 			//return query + queryToAdd.QueryString;
 		}
-		
+
+		/// <summary>
+		/// Check for empty parameter names an throws an exception if found any
+		/// </summary>
+		public ISqlQuery Check()
+		{
+			return Check(true);
+		}
+
 		/// <summary>
 		/// Check for empty parameter names an throws an exception if found any
 		/// </summary>
@@ -103,11 +111,19 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Check for empty parameter names an throws an exception if found any
+		/// Check for empty parameter names an return a list of them.
 		/// </summary>
-		public ISqlQuery Check()
+		/// <returns>A list of unresolved parameters</returns>
+		public IEnumerable<string> GetUnresolvedParameters()
 		{
-			return Check(true);
+			MatchCollection mc = Regex.Matches(this.QueryString, "#[a-zA-Z0-9_]+?#", RegexOptions.Singleline);
+			if (mc.Count > 0)
+			{
+				foreach (Match m in mc)
+				{
+					yield return m.Value;
+				}
+			}
 		}
 		
 		/// <summary>
@@ -434,23 +450,19 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Remove spaces, comments (line and block) and reformat the whole statement into a single line
+		/// Remove comments (line and block)
 		/// </summary>
 		/// <param name="query">A sql string</param>
 		/// <returns>A formatted sql string</returns>
 		private string Format(string query)
 		{
-            return query;
-            
-            //The formatting of a statement maybe destroy some variables. That's why is disabled.
-            //string tmp = query;
+            string tmp = query;
 
-            ////remove spaces, comments and reformat the whole statement into a single line
-            //tmp = Regex.Replace(tmp, @"(--.*)$", " ", RegexOptions.Multiline);
-            //tmp = Regex.Replace(tmp, @"(/\*.*?\*/)", " ", RegexOptions.Singleline);
-            //tmp = Regex.Replace(tmp.Replace('\r', ' ').Replace('\n', ' ').Replace("\r\n", " ").Replace('\t', ' '), @"\s{2,}", " ").Trim();
+            //remove coments
+            tmp = Regex.Replace(tmp, @"(--.*)$", " ", RegexOptions.Multiline);
+            tmp = Regex.Replace(tmp, @"(/\*.*?\*/)", " ", RegexOptions.Singleline);
 
-            //return tmp;
+            return tmp;
 		}
 
 		/// <summary>
