@@ -460,6 +460,30 @@ namespace SqlDataMapper
 			}
 			this.m_Providers.Add(id, provider);
 		}
+
+		/// <summary>
+		/// Set the default provider.
+		/// </summary>
+		/// <param name="id">A id from the provider pool</param>
+		public void SetDefaultProvider(string id)
+		{
+			if (String.IsNullOrEmpty(id))
+				throw new ArgumentNullException("id");
+
+			_defaultProvider = id;
+		}
+
+		/// <summary>
+		/// Set the default connection string.
+		/// </summary>
+		/// <param name="connectionString">A connection string</param>
+		public void SetDefaultConnectionString(string connectionString)
+		{
+			if (String.IsNullOrEmpty(connectionString))
+				throw new ArgumentNullException("connectionString");
+
+			_defaultConnectionString = connectionString;
+		}
 		
 		/// <summary>
 		/// Load all select statements out of the given xml file.
