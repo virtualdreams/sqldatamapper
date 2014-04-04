@@ -44,7 +44,7 @@ namespace SqlDataMapper
 		public SqlQuery(string query)
 		{
 			if(String.IsNullOrEmpty(query))
-				throw new ArgumentException("query");
+				throw new ArgumentNullException("query");
 				
 			this.QueryString = Format(query);
 		}
@@ -56,7 +56,7 @@ namespace SqlDataMapper
 		public SqlQuery(ISqlQuery query)
 		{
 			if(query == null)
-				throw new ArgumentException("query");
+				throw new ArgumentNullException("query");
 				
 			this.QueryString = Format(query.QueryString);
 		}
