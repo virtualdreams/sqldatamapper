@@ -116,12 +116,12 @@ namespace SqlDataMapper
 		/// <returns>A list of unresolved parameters</returns>
 		public IEnumerable<string> GetUnresolvedParameters()
 		{
-			MatchCollection mc = Regex.Matches(this.QueryString, "#[a-zA-Z0-9_]+?#", RegexOptions.Singleline);
+			MatchCollection mc = Regex.Matches(this.QueryString, "#([a-zA-Z0-9_]+)?#", RegexOptions.Singleline);
 			if (mc.Count > 0)
 			{
 				foreach (Match m in mc)
 				{
-					yield return m.Value;
+					yield return m.Groups[1].Value;
 				}
 			}
 		}
