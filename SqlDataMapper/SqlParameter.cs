@@ -7,60 +7,37 @@ using System.Collections.Specialized;
 namespace SqlDataMapper
 {
 	/// <summary>
-	/// A simple class to provide parameter for sql statements.
+	/// A class to provide parameter for sql statements.
 	/// </summary>
-	public class SqlParameter
+	public class SqlParameter : HybridDictionary
 	{
-		private HybridDictionary m_Parameters = new HybridDictionary();
-		
 		/// <summary>
-		/// Default constructor creates an empty parameter object
+		/// Create a new instance.
 		/// </summary>
 		public SqlParameter()
-		{
+		{ }
 
-		}
-		
 		/// <summary>
-		/// Constructor for adding a single parameter at creation.
+		/// Create a new instance and add a single parameter.
 		/// </summary>
-		/// <param name="key">A unique key</param>
-		/// <param name="value">The value</param>
+		/// <param name="key">A unique key.</param>
+		/// <param name="value">A value.</param>
 		public SqlParameter(string key, object value)
 		{
-			this.Add(key, value);
+			if (String.IsNullOrEmpty(key))
+				throw new ArgumentNullException("key");
+
+			base.Add(key, value);
 		}
-		
+
 		/// <summary>
-		/// Get direct access to the dictionary of parameters
-		/// </summary>
-		internal HybridDictionary Parameters
-		{
-			get
-			{
-				return m_Parameters;
-			}
-		}
-		
-		/// <summary>
-		/// Get the count of parameters.
-		/// </summary>
-		public int Count
-		{
-			get
-			{
-				return m_Parameters.Count;
-			}
-		}
-		
-		/// <summary>
-		/// Return if there are parameters or not.
+		/// Returns if this instance has parameters.
 		/// </summary>
 		public bool HasParameters
 		{
 			get
 			{
-				if(Count > 0)
+				if (this.Count > 0)
 					return true;
 				else
 					return false;
@@ -68,54 +45,35 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Add new parameter and value.
-		/// Existing parameters can't be overwritten.
+		/// Add new parameters.
 		/// </summary>
-		/// <param name="key">A unique key</param>
-		/// <param name="value">The value</param>
-		/// <returns>Returns true if key/value added</returns>
-		public bool Add(string key, object value)
+		/// <param name="key">A unique key.</param>
+		/// <param name="value">The value.</param>
+		public void Add(string key, object value)
 		{
-			if (!m_Parameters.Contains(key))
+			if(String.IsNullOrEmpty(key))
+				throw new ArgumentNullException("key");
+			
+			if (!this.Contains(key))
 			{
-				m_Parameters.Add(key, value);
-				return true;
+				base.Add(key, value);
 			}
-			return false;
-		}
-		
-		/// <summary>
-		/// Get a parameter value.
-		/// </summary>
-		/// <param name="key">The unique key</param>
-		/// <returns>The value</returns>
-		public object Get(string key)
-		{
-			if (m_Parameters.Contains(key))
-			{
-				return m_Parameters[key];
-			}
-			return null;
 		}
 
 		/// <summary>
-		/// Get or set a new parameter and value.
-		/// Parameters can be overwritten.
+		/// Get or set a parameter.
 		/// </summary>
-		/// <param name="key"></param>
-		/// <returns></returns>
+		/// <param name="key">A unique key.</param>
+		/// <returns>The value.</returns>
 		public object this[string key]
 		{
 			get
 			{
-				return this.Get(key);
+				return base[key];
 			}
 			set
 			{
-				if(!this.Add(key, value))
-				{
-					m_Parameters[key] = value;
-				}
+				base[key] = value;
 			}
 		}
 	}
