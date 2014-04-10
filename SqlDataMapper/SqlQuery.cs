@@ -12,7 +12,19 @@ namespace SqlDataMapper
 	/// </summary>
 	public class SqlQuery: ISqlQuery
 	{
+		/// <summary>
+		/// The format handler type to override the internal handler.
+		/// </summary>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		public delegate object FormatHandler(object value);
+
 		private string _query;
+
+		/// <summary>
+		/// Override the internal format handler.
+		/// </summary>
+		public FormatHandler Handler { get; set; }
 		
 		/// <summary>
 		/// Get the query string
@@ -33,9 +45,16 @@ namespace SqlDataMapper
 		/// Create an new sql query object with an empty query
 		/// </summary>
 		public SqlQuery()
-		{
-			this.QueryString = "";
-		}
+			: this("")
+		{ }
+
+		/// <summary>
+		/// Create a new sql query from an other instance
+		/// </summary>
+		/// <param name="query">A ISqlQuery instance</param>
+		public SqlQuery(ISqlQuery query)
+			: this(query.QueryString)
+		{ }
 		
 		/// <summary>
 		/// Create a new sql query.
@@ -43,22 +62,10 @@ namespace SqlDataMapper
 		/// <param name="query">A sql query</param>
 		public SqlQuery(string query)
 		{
-			if(String.IsNullOrEmpty(query))
-				throw new ArgumentNullException("query");
-				
-			this.QueryString = Format(query);
-		}
-		
-		/// <summary>
-		/// Create a new sql query from an other instance
-		/// </summary>
-		/// <param name="query">A ISqlQuery instance</param>
-		public SqlQuery(ISqlQuery query)
-		{
 			if(query == null)
 				throw new ArgumentNullException("query");
 				
-			this.QueryString = Format(query.QueryString);
+			this.QueryString = Format(query);
 		}
 		
 		/// <summary>
@@ -67,7 +74,6 @@ namespace SqlDataMapper
 		static public SqlQuery operator +(SqlQuery query, string queryToAdd)
 		{
 			return query.Add(queryToAdd);
-			//return new SqlQuery(query.QueryString).Add(queryToAdd);
 		}
 		
 		/// <summary>
@@ -76,7 +82,21 @@ namespace SqlDataMapper
 		static public SqlQuery operator +(SqlQuery query, ISqlQuery queryToAdd)
 		{
 			return query.Add(queryToAdd);
-			//return query + queryToAdd.QueryString;
+		}
+
+		/// <summary>
+		/// Check for empty parameter names an return a list of them.
+		/// </summary>
+		private IEnumerable<string> CheckForUnresolvedParameters()
+		{
+			MatchCollection mc = Regex.Matches(this.QueryString, "#([a-zA-Z0-9_]+)?#", RegexOptions.Singleline);
+			if (mc.Count > 0)
+			{
+				foreach (Match m in mc)
+				{
+					yield return m.Groups[1].Value;
+				}
+			}
 		}
 
 		/// <summary>
@@ -88,21 +108,22 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Check for empty parameter names an throws an exception if found any
+		/// Check for empty parameter names an throws an exception if found any.
 		/// </summary>
+		/// <param name="check">Perform the check if set to true.</param>
 		public ISqlQuery Check(bool check)
 		{
 			if(check)
 			{
-				MatchCollection mc = Regex.Matches(this.QueryString, "#[a-zA-Z0-9_]+?#", RegexOptions.Singleline);
-				if (mc.Count > 0)
+				string[] keys = CheckForUnresolvedParameters().ToArray();
+				if (keys.Count() > 0)
 				{
 					StringBuilder sb = new StringBuilder();
-					foreach (Match m in mc)
+					foreach (string key in keys)
 					{
 						if (sb.Length > 0)
 							sb.Append(", ");
-						sb.Append(m.Value);
+						sb.Append(key);
 					}
 					throw new SqlDataMapperException(String.Format("The sql statement has unresolved parameters. -> {0}", sb.ToString()));
 				}
@@ -111,19 +132,27 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Check for empty parameter names an return a list of them.
+		/// Get a SqlParameter object for unresolved parameters.
 		/// </summary>
-		/// <returns>A list of unresolved parameters</returns>
-		public IEnumerable<string> GetUnresolvedParameters()
+		public SqlParameter GetUnresolvedParameters()
 		{
-			MatchCollection mc = Regex.Matches(this.QueryString, "#([a-zA-Z0-9_]+)?#", RegexOptions.Singleline);
-			if (mc.Count > 0)
+			return this.GetUnresolvedParameters("");
+		}
+
+		/// <summary>
+		/// Get a SqlParameter object for unresolved parameters.
+		/// </summary>
+		/// <param name="value">A custom value for each parameter</param>
+		public SqlParameter GetUnresolvedParameters(object value)
+		{
+			SqlParameter param = new SqlParameter();
+
+			foreach (string key in CheckForUnresolvedParameters())
 			{
-				foreach (Match m in mc)
-				{
-					yield return m.Groups[1].Value;
-				}
+				param.Add(key, value);
 			}
+
+			return param;
 		}
 		
 		/// <summary>
@@ -182,7 +211,7 @@ namespace SqlDataMapper
 		{
 			if(parameters != null)
 			{
-				foreach(DictionaryEntry entry in parameters.Parameters)
+				foreach(DictionaryEntry entry in parameters)
 				{
 					QueryString = Replace((string)entry.Key, GetValue(entry.Value), true);
 				}
@@ -466,7 +495,7 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Convert the the value to a sql type. Lists are convertet to a comma separated line.
+		/// Convert the the value to a sql type. Enumerable exclude strings will transformed to comma separated line.
 		/// This is for usage within a IN command
 		/// </summary>
 		/// <param name="value">The value</param>
@@ -492,16 +521,20 @@ namespace SqlDataMapper
 
 		/// <summary>
 		/// Convert the the value to a sql type. This member function is for primtives.
+		/// This is also the default format handler.
 		/// </summary>
 		/// <param name="value">The value</param>
 		/// <returns>A sql compatible value if necessary</returns>
 		private object GetPrimitive(object value)
 		{
+			if (this.Handler != null)
+				return this.Handler(value);
+			
 			if (value == null)
 			{
 				return String.Format("null");
 			}
-			
+
 			if (value.GetType() == typeof(bool))
 			{
 				return (bool)value ? 1 : 0;
