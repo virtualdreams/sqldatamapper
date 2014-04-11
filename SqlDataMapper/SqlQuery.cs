@@ -495,11 +495,10 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Convert the the value to a sql type. Enumerable exclude strings will transformed to comma separated line.
-		/// This is for usage within a IN command
+		/// Convert the the value to a sql type. Enumerables, exclude strings and byte-arrays, will transformed to comma separated line.
 		/// </summary>
 		/// <param name="value">The value</param>
-		/// <returns>A sql compatible value if necessary</returns>
+		/// <returns>A sql compatible string</returns>
 		private object GetValue(object value)
 		{
 			IEnumerable enumerable = value as IEnumerable;
@@ -520,11 +519,10 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Convert the the value to a sql type. This member function is for primtives.
-		/// This is also the default format handler.
+		/// Format the value to compatible sql string.
 		/// </summary>
 		/// <param name="value">The value</param>
-		/// <returns>A sql compatible value if necessary</returns>
+		/// <returns>A sql compatible string</returns>
 		private object GetPrimitive(object value)
 		{
 			if (this.Handler != null)
