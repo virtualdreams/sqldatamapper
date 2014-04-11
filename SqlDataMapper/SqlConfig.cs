@@ -25,7 +25,24 @@ namespace SqlDataMapper
 		private bool m_ValidationCheck = false;
 		private string _defaultProvider = null;
 		private string _defaultConnectionString = null;
-		
+
+		#region Properties
+
+		/// <summary>
+		/// Assembly version
+		/// </summary>
+		public static string Version
+		{
+			get
+			{
+				Assembly assembly = Assembly.GetExecutingAssembly();
+				FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+				return String.Format("{0}", fvi.FileVersion);
+			}
+		}
+
+		#endregion
+
 		#region Structures
 		private struct Statement
 		{
