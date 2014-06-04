@@ -451,10 +451,10 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 
 			int matchCount = 0;
-			string newText = Regex.Replace(this.QueryString, String.Format(CultureInfo.InvariantCulture.NumberFormat, "#{0}#", name), match =>
+			string newText = Regex.Replace(this.QueryString, String.Format("#{0}#", name), match =>
 			{
 				matchCount++;
-				return match.Result(String.Format("{0}", value));
+				return match.Result(String.Format(CultureInfo.InvariantCulture.NumberFormat, "{0}", value));
 			}, RegexOptions.None);
 			
 			if(!suppressException)
