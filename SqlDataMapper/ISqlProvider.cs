@@ -43,7 +43,7 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Must provide select list functionality
 		/// </summary>
-		List<T> SelectList<T>(string query);
+		T[] SelectList<T>(string query);
 		
 		/// <summary>
 		/// Must provide select scalar functionality
@@ -53,7 +53,7 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Must provide select list functionality, implemented as scalar list.
 		/// </summary>
-		List<T> SelectScalarList<T>(string query);
+		T[] SelectScalarList<T>(string query);
 		
 		/// <summary>
 		/// Must provide insert functionality

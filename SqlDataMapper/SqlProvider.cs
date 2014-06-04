@@ -108,14 +108,6 @@ namespace SqlDataMapper
 			}
 		}
 		
-		///// <summary>
-		///// Escape special chars
-		///// </summary>
-		//public string Escape(string str)
-		//{
-		//    return str.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "\\\"");
-		//}
-        
         /// <summary>
         /// Select a single object from the database.
         /// </summary>
@@ -157,7 +149,7 @@ namespace SqlDataMapper
         /// <summary>
         /// Selects a list of objects from the database.
         /// </summary>
-        public List<T> SelectList<T>(string query)
+        public T[] SelectList<T>(string query)
         {
 			try
 			{
@@ -179,7 +171,7 @@ namespace SqlDataMapper
 						{
 							list.Add(SqlObject.GetAs<T>(reader));
 						}
-						return list;
+						return list.ToArray();
 					}
 				}
 			}
@@ -236,7 +228,7 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Selects the first column and each row.
 		/// </summary>
-		public List<T> SelectScalarList<T>(string query)
+		public T[] SelectScalarList<T>(string query)
 		{
 			try
 			{
@@ -276,7 +268,7 @@ namespace SqlDataMapper
 								}
 							}
 						}
-						return list;
+						return list.ToArray();
 					}
 				}
 			}
