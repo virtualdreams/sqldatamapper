@@ -255,6 +255,38 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
+		/// Executes a sql statement that returns a list of single values.
+		/// </summary>
+		/// <typeparam name="T">The object</typeparam>
+		/// <param name="query">The query object</param>
+		/// <returns>A list of single objects</returns>
+		public List<T> QueryForScalarList<T>(ISqlQuery query)
+		{
+			bool flag = false;
+			try
+			{
+				if (!m_IsTransactionSession)
+				{
+					m_Provider.Open();
+					flag = true;
+				}
+
+				return m_Provider.SelectScalarList<T>(query.Check(this.ParameterCheck).QueryString);
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+			finally
+			{
+				if (flag)
+				{
+					m_Provider.Close();
+				}
+			}
+		}
+
+		/// <summary>
 		/// Executes a sql insert statement.
 		/// </summary>
 		/// <param name="query">The query object</param>

@@ -232,6 +232,59 @@ namespace SqlDataMapper
 				throw ex;
 			}
         }
+
+		/// <summary>
+		/// Selects the first column and each row.
+		/// </summary>
+		public List<T> SelectScalarList<T>(string query)
+		{
+			try
+			{
+				using (DbCommand cmd = m_Connnection.CreateCommand())
+				{
+					cmd.CommandText = query;
+
+					if (m_Transaction != null)
+					{
+						cmd.Transaction = m_Transaction;
+					}
+
+					cmd.Prepare();
+
+					using (DbDataReader reader = cmd.ExecuteReader())
+					{
+						List<T> list = new List<T>();
+						while(reader.Read())
+						{
+
+							object obj = reader.GetValue(0);
+
+							if (obj is T)
+							{
+								list.Add((T)obj);
+							}
+							else
+							{
+								try
+								{
+									list.Add((T)Convert.ChangeType(obj, typeof(T)));
+								}
+								catch (InvalidCastException ex)
+								{
+									throw new Exception(String.Format("Invalid cast. Type '{0}' is required.", obj.GetType()), ex);
+									//return default(T);
+								}
+							}
+						}
+						return list;
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
 		
 		/// <summary>
 		/// Insert
