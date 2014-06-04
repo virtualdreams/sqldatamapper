@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections;
+using System.Globalization;
 
 namespace SqlDataMapper
 {
@@ -450,7 +451,7 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 
 			int matchCount = 0;
-			string newText = Regex.Replace(this.QueryString, String.Format("#{0}#", name), match =>
+			string newText = Regex.Replace(this.QueryString, String.Format(CultureInfo.InvariantCulture.NumberFormat, "#{0}#", name), match =>
 			{
 				matchCount++;
 				return match.Result(String.Format("{0}", value));
