@@ -486,7 +486,7 @@ namespace SqlDataMapper
 			{
 				matchCount++;
 				return match.Result(String.Format(CultureInfo.InvariantCulture.NumberFormat, "{0}", value));
-			}, RegexOptions.None);
+			}, RegexOptions.IgnoreCase);
 			
 			if(!suppressException)
 			{
