@@ -223,14 +223,29 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Set a single named parameter. The value can be every type.
 		/// </summary>
-		/// <param name="name"></param>
-		/// <param name="value"></param>
-		/// <returns></returns>
+		/// <param name="name">The named parameter</param>
+		/// <param name="value">The value</param>
+		/// <returns>The instance</returns>
 		public SqlQuery SetEntity(string name, object value)
 		{
 			if(String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 			
+			this.QueryString = Replace(name, GetValue(value));
+			return this;
+		}
+
+		/// <summary>
+		/// Set a single named parameter. The value can be every type.
+		/// </summary>
+		/// <param name="name">The named parameter</param>
+		/// <param name="value">The value</param>
+		/// <returns>The instance</returns>
+		public SqlQuery SetEntity<T>(string name, T value)
+		{
+			if (String.IsNullOrEmpty(name))
+				throw new ArgumentNullException("name");
+
 			this.QueryString = Replace(name, GetValue(value));
 			return this;
 		}
@@ -354,6 +369,22 @@ namespace SqlDataMapper
 			this.QueryString = Replace(name, GetValue(value));
 			return this;
 		}
+
+		/// <summary>
+		/// Set a single named parameter. The value must a Guid
+		/// </summary>
+		/// <param name="name">The named parameter</param>
+		/// <param name="value">The value</param>
+		/// <returns>The instance</returns>
+		public SqlQuery SetGuid(string name, Guid value)
+		{
+			if (String.IsNullOrEmpty(name))
+				throw new ArgumentNullException("name");
+
+			this.QueryString = Replace(name, GetValue(value));
+			return this;
+		}
+
 		
 		/// <summary>
 		/// Set a single named parameter. The value must a binary array.
@@ -547,6 +578,11 @@ namespace SqlDataMapper
 			if (value.GetType() == typeof(DateTime))
 			{
 				return String.Format("'{0:yyyy-MM-dd HH:mm:ss}'", value);
+			}
+
+			if (value.GetType() == typeof(Guid))
+			{
+				return String.Format("'{0}'", value);
 			}
 
 			if (value.GetType() == typeof(string))
