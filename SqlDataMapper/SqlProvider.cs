@@ -108,14 +108,6 @@ namespace SqlDataMapper
 			}
 		}
 		
-		///// <summary>
-		///// Escape special chars
-		///// </summary>
-		//public string Escape(string str)
-		//{
-		//    return str.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\"", "\\\"");
-		//}
-        
         /// <summary>
         /// Select a single object from the database.
         /// </summary>
@@ -157,7 +149,7 @@ namespace SqlDataMapper
         /// <summary>
         /// Selects a list of objects from the database.
         /// </summary>
-        public List<T> SelectList<T>(string query)
+        public T[] SelectList<T>(string query)
         {
 			try
 			{
@@ -179,7 +171,7 @@ namespace SqlDataMapper
 						{
 							list.Add(SqlObject.GetAs<T>(reader));
 						}
-						return list;
+						return list.ToArray();
 					}
 				}
 			}
@@ -232,6 +224,59 @@ namespace SqlDataMapper
 				throw ex;
 			}
         }
+
+		/// <summary>
+		/// Selects the first column and each row.
+		/// </summary>
+		public T[] SelectScalarList<T>(string query)
+		{
+			try
+			{
+				using (DbCommand cmd = m_Connnection.CreateCommand())
+				{
+					cmd.CommandText = query;
+
+					if (m_Transaction != null)
+					{
+						cmd.Transaction = m_Transaction;
+					}
+
+					cmd.Prepare();
+
+					using (DbDataReader reader = cmd.ExecuteReader())
+					{
+						List<T> list = new List<T>();
+						while(reader.Read())
+						{
+
+							object obj = reader.GetValue(0);
+
+							if (obj is T)
+							{
+								list.Add((T)obj);
+							}
+							else
+							{
+								try
+								{
+									list.Add((T)Convert.ChangeType(obj, typeof(T)));
+								}
+								catch (InvalidCastException ex)
+								{
+									throw new Exception(String.Format("Invalid cast. Type '{0}' is required.", obj.GetType()), ex);
+									//return default(T);
+								}
+							}
+						}
+						return list.ToArray();
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+		}
 		
 		/// <summary>
 		/// Insert

@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // Attribute gesteuert. Ändern Sie diese Attributwerte, um die Informationen zu ändern,
 // die mit einer Assembly verknüpft sind.
 [assembly: AssemblyTitle("SqlDataMapper")]
-[assembly: AssemblyDescription("Data-Access-Objects")]
+[assembly: AssemblyDescription("Map sql result sets to classes.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("stichelbiene.de")]
 [assembly: AssemblyProduct("SqlDataMapper")]
-[assembly: AssemblyCopyright("Copyright ©stichelbiene.de 2012")]
+[assembly: AssemblyCopyright("Copyright © stichelbiene.de 2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -33,4 +33,6 @@ using System.Runtime.InteropServices;
 // übernehmen, indem Sie "*" eingeben:
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("2.0.0.0")]
+[assembly: AssemblyFileVersion("2.3.11.0")]
+
+[assembly: AssemblyInformationalVersion("v2.0.0.0-28-g3e48f3e")]

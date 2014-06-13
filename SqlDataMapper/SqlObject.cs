@@ -61,10 +61,10 @@ namespace SqlDataMapper
 					continue;
 				}
 				
-				//if an alternate fieldname available, then use the alternate
+				//is an alias available, then use this instead
 				string colName = props[i].Name;
-				if(attr != null && !String.IsNullOrEmpty(attr.FieldName))
-					colName = attr.FieldName;
+				if(attr != null && !String.IsNullOrEmpty(attr.Alias))
+					colName = attr.Alias;
 				
 				if (ColumnExists(reader, colName))
 				{
@@ -113,10 +113,10 @@ namespace SqlDataMapper
 					continue;
 				}
 
-				//if an alternate fieldname available, then use the alternate
+				//is an alias available, then use this instead
 				string colName = props[i].Name;
-				if (attr != null && !String.IsNullOrEmpty(attr.FieldName))
-					colName = attr.FieldName;
+				if (attr != null && !String.IsNullOrEmpty(attr.Alias))
+					colName = attr.Alias;
 				
 				param.Add(colName, typeof(T).InvokeMember(props[i].Name, BindingFlags.GetProperty, null, obj, null));
 			}

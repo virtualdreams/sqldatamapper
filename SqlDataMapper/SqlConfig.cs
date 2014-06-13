@@ -16,21 +16,37 @@ using System.Diagnostics;
 namespace SqlDataMapper
 {
 	/// <summary>
-	/// The core class for sql mapping. It contains all necessary methods for easy interacting with sql servers.
+	/// The config class for sql mapping.
 	/// </summary>
-	public class SqlMapper
+	public class SqlConfig
 	{
 		private HybridDictionary m_Statements = new HybridDictionary();
 		private HybridDictionary m_Providers = new HybridDictionary();
 		private bool m_ValidationCheck = false;
 		private string _defaultProvider = null;
 		private string _defaultConnectionString = null;
-		
+
+		#region Properties
+
+		/// <summary>
+		/// Assembly version
+		/// </summary>
+		public static string Version
+		{
+			get
+			{
+				Assembly assembly = Assembly.GetExecutingAssembly();
+				FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+				return String.Format("{0}", fvi.FileVersion);
+			}
+		}
+
+		#endregion
+
 		#region Structures
 		private struct Statement
 		{
 			public string statement;
-			public string classname;
 		};
 
 		private struct Provider
@@ -58,71 +74,53 @@ namespace SqlDataMapper
 				m_ValidationCheck = value;
 			}
 		}
-		
 		#endregion
 		
 		#region Constructors
 		
 		/// <summary>
 		/// Constructor for auto configuration (zeroconf).
-		/// Searchs for <c>SqlMapperConfig.xml</c> file, otherwise throws an excpetion.
+		/// Searchs for <c>SqlMapperConfig.xml</c> file, otherwise throws an exception.
 		/// </summary>
-		public SqlMapper()
-		{
-			string file = ConvertToFullPath("SqlMapperConfig.xml");
-			
-			FileInfo fi = new FileInfo(file);
-			if(fi.Exists)
-			{
-				LoadConfiguration(fi.FullName);
-			}
-			else
-			{
-				throw new SqlDataMapperException("Can't find 'SqlMapperConfig.xml' for autoconfiguration.");
-			}
-		}
+		public SqlConfig()
+            :this(false)
+		{ }
+
+        /// <summary>
+        /// Constructor for auto configuration (zeroconf).
+        /// Searchs for <c>SqlMapperConfig.xml</c> file, otherwise throws an exception.
+        /// If createEmpty is set to true, an empty instance was created.
+        /// </summary>
+        /// <param name="createEmpty">Initialzes an empty instance or zeroconf</param>
+        public SqlConfig(bool createEmpty)
+        {
+            if (createEmpty)
+                return;
+            
+            string file = ConvertToFullPath("SqlMapperConfig.xml");
+
+            FileInfo fi = new FileInfo(file);
+            if (fi.Exists)
+            {
+                LoadConfiguration(fi.FullName);
+            }
+            else
+            {
+                throw new SqlDataMapperException("Can't find 'SqlMapperConfig.xml' for autoconfiguration.");
+            }
+        }
 		
 		/// <summary>
 		/// Constructor for auto configuration.
 		/// </summary>
-		/// <param name="configXml">The configuration file</param>
-		public SqlMapper(string configXml)
+		/// <param name="config">The configuration file</param>
+		public SqlConfig(string config)
 		{
-			if(String.IsNullOrEmpty(configXml))
-				throw new ArgumentNullException("configXml");
+			if(String.IsNullOrEmpty(config))
+				throw new ArgumentNullException("config");
 			
-			LoadConfiguration(configXml);
+			LoadConfiguration(config);
 		}
-		
-		///// <summary>
-		///// Constructor for non auto configuration. Instantiate your own provider. This instance has no statements and must filled manually or with embeded statements.
-		///// </summary>
-		///// <param name="provider">The provider <ref>SqlProvider</ref> or your own <ref>ISqlProvider</ref></param>
-		//public SqlMapper(ISqlProvider provider)
-		//{
-		//    if(provider == null)
-		//        throw new ArgumentNullException("provider");
-				
-		//    m_Provider = provider;
-		//}
-
-		///// <summary>
-		///// Constructor for non auto configuration. Instantiate your own provider an load your own mappings.
-		///// </summary>
-		///// <param name="provider">The provider <ref>SqlProvider</ref> or your own <ref>ISqlProvider</ref></param>
-		///// <param name="mappingXml">The xml file containing the xml statements</param>
-		//public SqlMapper(ISqlProvider provider, string mappingXml)
-		//{
-		//    if(provider == null)
-		//        throw new ArgumentNullException("provider");
-				
-		//    if(String.IsNullOrEmpty(mappingXml))
-		//        throw new ArgumentNullException("mappingXml");
-
-		//    m_Provider = provider;
-		//    LoadMappings(mappingXml);
-		//}
-		
 		#endregion
 
 		#region Configuration methods
@@ -154,7 +152,7 @@ namespace SqlDataMapper
 		/// Load the providers xml file.
 		/// </summary>
 		/// <param name="filename">The xml file contains the provider informations</param>
-		private void LoadProviders(string filename)
+		public void LoadProviders(string filename)
 		{
 			try
 			{
@@ -192,7 +190,7 @@ namespace SqlDataMapper
 				LoadInserts(doc);
 				LoadUpdates(doc);
 				LoadDeletes(doc);
-				LoadSegments(doc);
+				LoadParts(doc);
 				LoadInclude(doc);
 			}
 			catch (Exception ex)
@@ -300,6 +298,18 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
+		/// Get all provider ids from pool.
+		/// </summary>
+		/// <returns></returns>
+		public IEnumerable<string> GetProviders()
+		{
+			foreach(string key in m_Providers.Keys)
+			{
+				yield return key;
+			}
+		}
+
+		/// <summary>
 		/// Get the full path for the given filename.
 		/// </summary>
 		/// <param name="filename">The filename as file, absolute filepath or relative filepath</param>
@@ -355,6 +365,18 @@ namespace SqlDataMapper
 			Statement st = (Statement)m_Statements[id];
 			return st.statement;
 		}
+
+		/// <summary>
+		/// Get all statements ids from pool.
+		/// </summary>
+		/// <returns></returns>
+		public IEnumerable<string> GetStatments()
+		{
+			foreach (string key in m_Statements.Keys)
+			{
+				yield return key;
+			}
+		}
 		
 		/// <summary>
 		/// Create a new dynamic query out of the statement pool
@@ -397,7 +419,7 @@ namespace SqlDataMapper
 		/// Create a new context using custom provider and connection string.
 		/// </summary>
 		/// <param name="id">A provider from configuration</param>
-		/// <param name="connectionString">Custom connection string.</param>
+		/// <param name="connectionString">Custom connection string</param>
 		public SqlContext CreateContext(string id, string connectionString)
 		{
 			if (String.IsNullOrEmpty(id))
@@ -414,32 +436,6 @@ namespace SqlDataMapper
 		
 		#region Internal methods
 
-		///// <summary>
-		///// The class type must match with provided class name from the sql map
-		///// </summary>
-		//private void CheckClassType()
-		//{
-		//    if (!String.Equals(typeof(T).FullName, GetClassname(id)))
-		//    {
-		//        throw new Exception(String.Format("The class type '{0}' doesn't match with statement provided class type '{1}'", typeof(T).GetType().FullName, GetClassname(id)));
-		//    }
-		//}
-
-		/// <summary>
-		/// Get the associated classname for the provided statement.
-		/// </summary>
-		/// <param name="id">The id that identifies the statement</param>
-		/// <returns>Return the associated classname</returns>
-		private string GetClassname(string id)
-		{
-			if (!m_Statements.Contains(id))
-			{
-				throw new Exception(String.Format("This sql map does not contain a statement named '{0}'", id));
-			}
-			Statement st = (Statement)m_Statements[id];
-			return st.classname;
-		}
-
 		/// <summary>
 		/// Add a user defined statement to the statement pool.
 		/// </summary>
@@ -447,18 +443,10 @@ namespace SqlDataMapper
 		/// <param name="statement">The object contains the statement informations</param>
 		public void AddStatement(string id, string statement)
 		{
-			this.AddStatement(id, new Statement{ statement = statement, classname = "" });
-		}
-
-		/// <summary>
-		/// Add a user defined statement to the statement pool.
-		/// </summary>
-		/// <param name="id">The unique identifier for the statement</param>
-		/// <param name="statement">A string contains the statement</param>
-		/// <param name="classname">A string contains the classname</param>
-		public void AddStatement(string id, string statement, string classname)
-		{
-			this.AddStatement(id, new Statement { statement = statement, classname = classname });
+			if(String.IsNullOrEmpty(statement))
+				throw new ArgumentNullException("statement");
+			
+			this.AddStatement(id, new Statement{ statement = statement });
 		}
 		
 		/// <summary>
@@ -469,7 +457,7 @@ namespace SqlDataMapper
 		private void AddStatement(string id, Statement statement)
 		{
 			if(String.IsNullOrEmpty(id))
-				throw new ArgumentException("The id can't be null or an empty string.", "id");
+				throw new ArgumentNullException("id");
 			
 			if(m_Statements.Contains(id))
 			{
@@ -477,19 +465,65 @@ namespace SqlDataMapper
 			}
 			this.m_Statements.Add(id, statement);
 		}
+
+		/// <summary>
+		/// Add a user defined provider to the provider pool.
+		/// assemblyName like: MySql.Data
+		/// connectionClass like: MySql.Data.MySqlClient.MySqlConnection
+		/// </summary>
+		/// <param name="id">The unique identifier for the provider</param>
+		/// <param name="assemblyName">The assembly name.</param>
+		/// <param name="connectionClass">The connection class.</param>
+		public void AddProvider(string id, string assemblyName, string connectionClass)
+		{
+			if(String.IsNullOrEmpty(assemblyName))
+				throw new ArgumentNullException("assemblyName");
+
+			if(String.IsNullOrEmpty(connectionClass))
+				throw new ArgumentNullException("connectionClass");
+
+			this.AddProvider(id, new Provider { assemblyName = assemblyName, connectionClass = connectionClass });
+		}
 		
 		/// <summary>
 		/// Add a loaded provider to the provider pool.
 		/// </summary>
-		/// <param name="id">The unique identifier for the statement</param>
+		/// <param name="id">The unique identifier for the provider</param>
 		/// <param name="provider">The object contains the provider informations</param>
 		private void AddProvider(string id, Provider provider)
 		{
-			if (m_Providers.Contains(id))
+            if (String.IsNullOrEmpty(id))
+                throw new ArgumentNullException("id");
+            
+            if (m_Providers.Contains(id))
 			{
 				throw new SqlDataMapperException(String.Format("The provider pool already contains a provider named '{0}'", id));
 			}
 			this.m_Providers.Add(id, provider);
+		}
+
+		/// <summary>
+		/// Set the default provider.
+		/// </summary>
+		/// <param name="id">A id from the provider pool</param>
+		public void SetDefaultProvider(string id)
+		{
+			if (String.IsNullOrEmpty(id))
+				throw new ArgumentNullException("id");
+
+			_defaultProvider = id;
+		}
+
+		/// <summary>
+		/// Set the default connection string.
+		/// </summary>
+		/// <param name="connectionString">A connection string</param>
+		public void SetDefaultConnectionString(string connectionString)
+		{
+			if (String.IsNullOrEmpty(connectionString))
+				throw new ArgumentNullException("connectionString");
+
+			_defaultConnectionString = connectionString;
 		}
 		
 		/// <summary>
@@ -503,7 +537,6 @@ namespace SqlDataMapper
 							select new 
 							{
 								id = query.Attribute("id").Value,
-								cl = query.Attribute("class").Value,
 								value = query.Value
 							};
 						  
@@ -511,9 +544,8 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				string cl = select.cl.Trim();
 				
-				AddStatement(id, new Statement { statement = value, classname = cl });
+				AddStatement(id, new Statement { statement = value });
 			}
 		}
 		
@@ -528,7 +560,6 @@ namespace SqlDataMapper
 			                select new 
 			                {
 			                    id = query.Attribute("id").Value,
-								cl = query.Attribute("class").Value,
 			                    value = query.Value
 			                };
 						  
@@ -536,9 +567,8 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				string cl = select.cl.Trim();
 
-				AddStatement(id, new Statement { statement = value, classname = cl });
+				AddStatement(id, new Statement { statement = value });
 			}
 		}
 		
@@ -553,7 +583,6 @@ namespace SqlDataMapper
 			                select new 
 			                {
 			                    id = query.Attribute("id").Value,
-								cl = query.Attribute("class").Value,
 			                    value = query.Value
 			                };
 						  
@@ -561,9 +590,8 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				string cl = select.cl.Trim();
 
-				AddStatement(id, new Statement { statement = value, classname = cl });
+				AddStatement(id, new Statement { statement = value });
 			}
 		}
 		
@@ -578,7 +606,6 @@ namespace SqlDataMapper
 			                select new 
 			                {
 			                    id = query.Attribute("id").Value,
-								cl = query.Attribute("class").Value,
 			                    value = query.Value
 			                };
 						  
@@ -586,9 +613,8 @@ namespace SqlDataMapper
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				string cl = select.cl.Trim();
 
-				AddStatement(id, new Statement { statement = value, classname = cl });
+				AddStatement(id, new Statement { statement = value });
 			}
 		}
 
@@ -596,24 +622,22 @@ namespace SqlDataMapper
 		/// Load all fragment statements out of the given xml file.
 		/// </summary>
 		/// <param name="doc">The document that contains the statements</param>
-		private void LoadSegments(XDocument doc)
+		private void LoadParts(XDocument doc)
 		{
 			//get all delete statements
-			var deletes = from query in doc.Element("sqlMap").Elements("segment")
+			var parts = from query in doc.Element("sqlMap").Elements("part")
 						  select new
 						  {
 							  id = query.Attribute("id").Value,
-							  cl = query.Attribute("class").Value,
 							  value = query.Value
 						  };
 
-			foreach (var select in deletes)
+			foreach (var select in parts)
 			{
 				string id = select.id.Trim();
 				string value = select.value.Trim();
-				string cl = select.cl.Trim();
 
-				AddStatement(id, new Statement { statement = value, classname = cl });
+				AddStatement(id, new Statement { statement = value });
 			}
 		}
 		

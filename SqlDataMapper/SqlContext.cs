@@ -193,10 +193,10 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Executes a sql select statement that returns data to populate a number of result objects.
 		/// </summary>
-		/// <typeparam name="T">The object type</typeparam>
+		/// <typeparam name="TDestination">The object type</typeparam>
 		/// <param name="query">The query object</param>
 		/// <returns>A list ob objects</returns>
-		public List<T> QueryForList<T>(ISqlQuery query)
+		public TDestination[] QueryForList<TDestination>(ISqlQuery query)
 		{
 			bool flag = false;
 			try
@@ -207,7 +207,7 @@ namespace SqlDataMapper
 					flag = true;
 				}
 
-				return m_Provider.SelectList<T>(query.Check(this.ParameterCheck).QueryString);
+				return m_Provider.SelectList<TDestination>(query.Check(this.ParameterCheck).QueryString);
 			}
 			catch (Exception ex)
 			{
@@ -240,6 +240,38 @@ namespace SqlDataMapper
 				}
 
 				return m_Provider.SelectScalar<T>(query.Check(this.ParameterCheck).QueryString);
+			}
+			catch (Exception ex)
+			{
+				throw ex;
+			}
+			finally
+			{
+				if (flag)
+				{
+					m_Provider.Close();
+				}
+			}
+		}
+
+		/// <summary>
+		/// Executes a sql statement that returns a list of single values.
+		/// </summary>
+		/// <typeparam name="TDestination">The object</typeparam>
+		/// <param name="query">The query object</param>
+		/// <returns>A list of single objects</returns>
+		public TDestination[] QueryForScalarList<TDestination>(ISqlQuery query)
+		{
+			bool flag = false;
+			try
+			{
+				if (!m_IsTransactionSession)
+				{
+					m_Provider.Open();
+					flag = true;
+				}
+
+				return m_Provider.SelectScalarList<TDestination>(query.Check(this.ParameterCheck).QueryString);
 			}
 			catch (Exception ex)
 			{

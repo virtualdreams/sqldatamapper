@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections;
+using System.Globalization;
 
 namespace SqlDataMapper
 {
@@ -12,7 +13,19 @@ namespace SqlDataMapper
 	/// </summary>
 	public class SqlQuery: ISqlQuery
 	{
+		/// <summary>
+		/// The format handler type to override the internal handler.
+		/// </summary>
+		/// <param name="value"></param>
+		/// <returns></returns>
+		public delegate object FormatHandler(object value);
+
 		private string _query;
+
+		/// <summary>
+		/// Override the internal format handler.
+		/// </summary>
+		public FormatHandler Handler { get; set; }
 		
 		/// <summary>
 		/// Get the query string
@@ -33,9 +46,16 @@ namespace SqlDataMapper
 		/// Create an new sql query object with an empty query
 		/// </summary>
 		public SqlQuery()
-		{
-			this.QueryString = "";
-		}
+			: this("")
+		{ }
+
+		/// <summary>
+		/// Create a new sql query from an other instance
+		/// </summary>
+		/// <param name="query">A ISqlQuery instance</param>
+		public SqlQuery(ISqlQuery query)
+			: this(query.QueryString)
+		{ }
 		
 		/// <summary>
 		/// Create a new sql query.
@@ -43,22 +63,10 @@ namespace SqlDataMapper
 		/// <param name="query">A sql query</param>
 		public SqlQuery(string query)
 		{
-			if(String.IsNullOrEmpty(query))
-				throw new ArgumentException("query");
+			if(query == null)
+				throw new ArgumentNullException("query");
 				
 			this.QueryString = Format(query);
-		}
-		
-		/// <summary>
-		/// Create a new sql query from an other instance
-		/// </summary>
-		/// <param name="query">A ISqlQuery instance</param>
-		public SqlQuery(ISqlQuery query)
-		{
-			if(query == null)
-				throw new ArgumentException("query");
-				
-			this.QueryString = Format(query.QueryString);
 		}
 		
 		/// <summary>
@@ -67,7 +75,6 @@ namespace SqlDataMapper
 		static public SqlQuery operator +(SqlQuery query, string queryToAdd)
 		{
 			return query.Add(queryToAdd);
-			//return new SqlQuery(query.QueryString).Add(queryToAdd);
 		}
 		
 		/// <summary>
@@ -76,30 +83,21 @@ namespace SqlDataMapper
 		static public SqlQuery operator +(SqlQuery query, ISqlQuery queryToAdd)
 		{
 			return query.Add(queryToAdd);
-			//return query + queryToAdd.QueryString;
 		}
-		
+
 		/// <summary>
-		/// Check for empty parameter names an throws an exception if found any
+		/// Check for empty parameter names an return a list of them.
 		/// </summary>
-		public ISqlQuery Check(bool check)
+		private IEnumerable<string> CheckForUnresolvedParameters()
 		{
-			if(check)
+			MatchCollection mc = Regex.Matches(this.QueryString, "#([a-zA-Z0-9_]+)?#", RegexOptions.Singleline);
+			if (mc.Count > 0)
 			{
-				MatchCollection mc = Regex.Matches(this.QueryString, "#[a-zA-Z0-9_]+?#", RegexOptions.Singleline);
-				if (mc.Count > 0)
+				foreach (Match m in mc)
 				{
-					StringBuilder sb = new StringBuilder();
-					foreach (Match m in mc)
-					{
-						if (sb.Length > 0)
-							sb.Append(", ");
-						sb.Append(m.Value);
-					}
-					throw new SqlDataMapperException(String.Format("The sql statement has unresolved parameters. -> {0}", sb.ToString()));
+					yield return m.Groups[1].Value;
 				}
 			}
-			return this;
 		}
 
 		/// <summary>
@@ -108,6 +106,54 @@ namespace SqlDataMapper
 		public ISqlQuery Check()
 		{
 			return Check(true);
+		}
+
+		/// <summary>
+		/// Check for empty parameter names an throws an exception if found any.
+		/// </summary>
+		/// <param name="check">Perform the check if set to true.</param>
+		public ISqlQuery Check(bool check)
+		{
+			if(check)
+			{
+				string[] keys = CheckForUnresolvedParameters().ToArray();
+				if (keys.Count() > 0)
+				{
+					StringBuilder sb = new StringBuilder();
+					foreach (string key in keys)
+					{
+						if (sb.Length > 0)
+							sb.Append(", ");
+						sb.Append(key);
+					}
+					throw new SqlDataMapperException(String.Format("The sql statement has unresolved parameters. -> {0}", sb.ToString()));
+				}
+			}
+			return this;
+		}
+
+		/// <summary>
+		/// Get a SqlParameter object for unresolved parameters.
+		/// </summary>
+		public SqlParameter GetUnresolvedParameters()
+		{
+			return this.GetUnresolvedParameters("");
+		}
+
+		/// <summary>
+		/// Get a SqlParameter object for unresolved parameters.
+		/// </summary>
+		/// <param name="value">A custom value for each parameter</param>
+		public SqlParameter GetUnresolvedParameters(object value)
+		{
+			SqlParameter param = new SqlParameter();
+
+			foreach (string key in CheckForUnresolvedParameters())
+			{
+				param.Add(key, value);
+			}
+
+			return param;
 		}
 		
 		/// <summary>
@@ -166,7 +212,7 @@ namespace SqlDataMapper
 		{
 			if(parameters != null)
 			{
-				foreach(DictionaryEntry entry in parameters.Parameters)
+				foreach(DictionaryEntry entry in parameters)
 				{
 					QueryString = Replace((string)entry.Key, GetValue(entry.Value), true);
 				}
@@ -177,14 +223,29 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Set a single named parameter. The value can be every type.
 		/// </summary>
-		/// <param name="name"></param>
-		/// <param name="value"></param>
-		/// <returns></returns>
+		/// <param name="name">The named parameter</param>
+		/// <param name="value">The value</param>
+		/// <returns>The instance</returns>
 		public SqlQuery SetEntity(string name, object value)
 		{
 			if(String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 			
+			this.QueryString = Replace(name, GetValue(value));
+			return this;
+		}
+
+		/// <summary>
+		/// Set a single named parameter. The value can be every type.
+		/// </summary>
+		/// <param name="name">The named parameter</param>
+		/// <param name="value">The value</param>
+		/// <returns>The instance</returns>
+		public SqlQuery SetEntity<T>(string name, T value)
+		{
+			if (String.IsNullOrEmpty(name))
+				throw new ArgumentNullException("name");
+
 			this.QueryString = Replace(name, GetValue(value));
 			return this;
 		}
@@ -264,6 +325,21 @@ namespace SqlDataMapper
 			return this;
 		}
 
+        /// <summary>
+        /// Set a single named parameter. The value must a decimal
+        /// </summary>
+        /// <param name="name">The named parameter</param>
+        /// <param name="value">The value</param>
+        /// <returns>This instance</returns>
+        public SqlQuery SetDecimal(string name, decimal value)
+        {
+            if (String.IsNullOrEmpty(name))
+				throw new ArgumentNullException("name");
+
+			this.QueryString = Replace(name, GetValue(value));
+			return this;
+        }
+
 		/// <summary>
 		/// Set a single named parameter. The value must a char
 		/// </summary>
@@ -293,6 +369,22 @@ namespace SqlDataMapper
 			this.QueryString = Replace(name, GetValue(value));
 			return this;
 		}
+
+		/// <summary>
+		/// Set a single named parameter. The value must a Guid
+		/// </summary>
+		/// <param name="name">The named parameter</param>
+		/// <param name="value">The value</param>
+		/// <returns>The instance</returns>
+		public SqlQuery SetGuid(string name, Guid value)
+		{
+			if (String.IsNullOrEmpty(name))
+				throw new ArgumentNullException("name");
+
+			this.QueryString = Replace(name, GetValue(value));
+			return this;
+		}
+
 		
 		/// <summary>
 		/// Set a single named parameter. The value must a binary array.
@@ -393,8 +485,8 @@ namespace SqlDataMapper
 			string newText = Regex.Replace(this.QueryString, String.Format("#{0}#", name), match =>
 			{
 				matchCount++;
-				return match.Result(String.Format("{0}", value));
-			}, RegexOptions.None);
+				return match.Result(String.Format(CultureInfo.InvariantCulture.NumberFormat, "{0}", value));
+			}, RegexOptions.IgnoreCase);
 			
 			if(!suppressException)
 			{
@@ -419,28 +511,26 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Remove spaces, comments (line and block) and reformat the whole statement into a single line
+		/// Remove comments (line and block)
 		/// </summary>
 		/// <param name="query">A sql string</param>
 		/// <returns>A formatted sql string</returns>
 		private string Format(string query)
 		{
-			string tmp = query;
+            string tmp = query;
 
-			//remove spaces, comments and reformat the whole statement into a single line
-			tmp = Regex.Replace(tmp, @"(--.*)$", " ", RegexOptions.Multiline);
-			tmp = Regex.Replace(tmp, @"(/\*.*?\*/)", " ", RegexOptions.Singleline);
-			tmp = Regex.Replace(tmp.Replace('\r', ' ').Replace('\n', ' ').Replace("\r\n", " ").Replace('\t', ' '), @"\s{2,}", " ").Trim();
+            //remove coments
+            tmp = Regex.Replace(tmp, @"(--.*)$", " ", RegexOptions.Multiline);
+            tmp = Regex.Replace(tmp, @"(/\*.*?\*/)", " ", RegexOptions.Singleline);
 
-			return tmp;
+            return tmp;
 		}
 
 		/// <summary>
-		/// Convert the the value to a sql type. Lists are convertet to a comma separated line.
-		/// This is for usage within a IN command
+		/// Convert the the value to a sql type. Enumerables, exclude strings and byte-arrays, will transformed to comma separated line.
 		/// </summary>
 		/// <param name="value">The value</param>
-		/// <returns>A sql compatible value if necessary</returns>
+		/// <returns>A sql compatible string</returns>
 		private object GetValue(object value)
 		{
 			IEnumerable enumerable = value as IEnumerable;
@@ -461,17 +551,20 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Convert the the value to a sql type. This member function is for primtives.
+		/// Format the value to compatible sql string.
 		/// </summary>
 		/// <param name="value">The value</param>
-		/// <returns>A sql compatible value if necessary</returns>
+		/// <returns>A sql compatible string</returns>
 		private object GetPrimitive(object value)
 		{
+			if (this.Handler != null)
+				return this.Handler(value);
+			
 			if (value == null)
 			{
 				return String.Format("null");
 			}
-			
+
 			if (value.GetType() == typeof(bool))
 			{
 				return (bool)value ? 1 : 0;
@@ -485,6 +578,11 @@ namespace SqlDataMapper
 			if (value.GetType() == typeof(DateTime))
 			{
 				return String.Format("'{0:yyyy-MM-dd HH:mm:ss}'", value);
+			}
+
+			if (value.GetType() == typeof(Guid))
+			{
+				return String.Format("'{0}'", value);
 			}
 
 			if (value.GetType() == typeof(string))
