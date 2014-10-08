@@ -192,15 +192,15 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Convert the object to a parameter object and try to replace all named parameters
 		/// </summary>
-		/// <typeparam name="T">The object type</typeparam>
-		/// <param name="obj">The object</param>
+		/// <typeparam name="TSource">The object type</typeparam>
+		/// <param name="source">The object</param>
 		/// <returns>This instance</returns>
-		public SqlQuery SetEntities<T>(T obj)
+		public SqlQuery SetEntities<TSource>(TSource source) where TSource: class, new()
 		{
-			if(obj == null)
+			if(source == null)
 				throw new ArgumentNullException("obj");
 			
-			return SetEntities(SqlObject.GetParameters<T>(obj));
+			return SetEntities(SqlObject.GetAsParameter<TSource>(source));
 		}
 		
 		/// <summary>

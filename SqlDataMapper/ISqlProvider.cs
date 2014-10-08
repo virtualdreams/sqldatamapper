@@ -38,22 +38,22 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Must provide select object functionality
 		/// </summary>
-		T Select<T>(string query);
+		T Select<T>(string query) where T : class, new();
 		
 		/// <summary>
 		/// Must provide select list functionality
 		/// </summary>
-		T[] SelectList<T>(string query);
+		IEnumerable<T> SelectList<T>(string query) where T : class, new();
 		
 		/// <summary>
 		/// Must provide select scalar functionality
 		/// </summary>
-		T SelectScalar<T>(string query);
+		T SelectScalar<T>(string query) where T : IConvertible;
 
 		/// <summary>
 		/// Must provide select list functionality, implemented as scalar list.
 		/// </summary>
-		T[] SelectScalarList<T>(string query);
+		IEnumerable<T> SelectScalarList<T>(string query) where T : IConvertible;
 		
 		/// <summary>
 		/// Must provide insert functionality

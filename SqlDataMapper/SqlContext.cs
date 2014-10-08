@@ -161,10 +161,10 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Executes a sql select statement that returns data to populate a single object instance.
 		/// </summary>
-		/// <typeparam name="T">The object type</typeparam>
+		/// <typeparam name="TDestination">The object type</typeparam>
 		/// <param name="query">The query object</param>
 		/// <returns>A single object</returns>
-		public T QueryForObject<T>(ISqlQuery query)
+		public TDestination QueryForObject<TDestination>(ISqlQuery query) where TDestination : class, new()
 		{
 			bool flag = false;
 			try
@@ -175,7 +175,7 @@ namespace SqlDataMapper
 					flag = true;
 				}
 
-				return m_Provider.Select<T>(query.Check(this.ParameterCheck).QueryString);
+				return m_Provider.Select<TDestination>(query.Check(this.ParameterCheck).QueryString);
 			}
 			catch (Exception ex)
 			{
@@ -196,7 +196,7 @@ namespace SqlDataMapper
 		/// <typeparam name="TDestination">The object type</typeparam>
 		/// <param name="query">The query object</param>
 		/// <returns>A list ob objects</returns>
-		public TDestination[] QueryForList<TDestination>(ISqlQuery query)
+		public TDestination[] QueryForList<TDestination>(ISqlQuery query) where TDestination : class, new()
 		{
 			bool flag = false;
 			try
@@ -207,7 +207,7 @@ namespace SqlDataMapper
 					flag = true;
 				}
 
-				return m_Provider.SelectList<TDestination>(query.Check(this.ParameterCheck).QueryString);
+				return m_Provider.SelectList<TDestination>(query.Check(this.ParameterCheck).QueryString).ToArray();
 			}
 			catch (Exception ex)
 			{
@@ -225,10 +225,10 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Executes a sql select statement that returns a single value.
 		/// </summary>
-		/// <typeparam name="T">The object</typeparam>
+		/// <typeparam name="TDestination">The object</typeparam>
 		/// <param name="query">The query object</param>
 		/// <returns>A single object</returns>
-		public T QueryForScalar<T>(ISqlQuery query)
+		public TDestination QueryForScalar<TDestination>(ISqlQuery query) where TDestination : IConvertible
 		{
 			bool flag = false;
 			try
@@ -239,7 +239,7 @@ namespace SqlDataMapper
 					flag = true;
 				}
 
-				return m_Provider.SelectScalar<T>(query.Check(this.ParameterCheck).QueryString);
+				return m_Provider.SelectScalar<TDestination>(query.Check(this.ParameterCheck).QueryString);
 			}
 			catch (Exception ex)
 			{
@@ -260,7 +260,7 @@ namespace SqlDataMapper
 		/// <typeparam name="TDestination">The object</typeparam>
 		/// <param name="query">The query object</param>
 		/// <returns>A list of single objects</returns>
-		public TDestination[] QueryForScalarList<TDestination>(ISqlQuery query)
+		public TDestination[] QueryForScalarList<TDestination>(ISqlQuery query) where TDestination : IConvertible
 		{
 			bool flag = false;
 			try
@@ -271,7 +271,7 @@ namespace SqlDataMapper
 					flag = true;
 				}
 
-				return m_Provider.SelectScalarList<TDestination>(query.Check(this.ParameterCheck).QueryString);
+				return m_Provider.SelectScalarList<TDestination>(query.Check(this.ParameterCheck).QueryString).ToArray();
 			}
 			catch (Exception ex)
 			{

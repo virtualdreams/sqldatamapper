@@ -111,170 +111,139 @@ namespace SqlDataMapper
         /// <summary>
         /// Select a single object from the database.
         /// </summary>
-        public T Select<T>(string query)
-        {
-			try
+		public T Select<T>(string query) where T : class, new()
+		{
+			using (DbCommand cmd = m_Connnection.CreateCommand())
 			{
-				using (DbCommand cmd = m_Connnection.CreateCommand())
+				cmd.CommandText = query;
+
+				if (m_Transaction != null)
 				{
-					cmd.CommandText = query;
+					cmd.Transaction = m_Transaction;
+				}
 
-					if (m_Transaction != null)
+				cmd.Prepare();
+
+				using (DbDataReader reader = cmd.ExecuteReader())
+				{
+					if (reader.HasRows)
 					{
-						cmd.Transaction = m_Transaction;
+						reader.Read();
+
+						return SqlObject.GetAs<T>(reader);
 					}
-					
-					cmd.Prepare();
-
-					using (DbDataReader reader = cmd.ExecuteReader())
+					else
 					{
-						if (reader.HasRows)
-						{
-							reader.Read();
-							return SqlObject.GetAs<T>(reader);
-						}
-						else
-						{
-							return default(T);
-						}
+						return default(T);
 					}
 				}
 			}
-			catch (Exception ex)
-			{
-				throw ex;
-			}
-        }
+		}
         
         /// <summary>
         /// Selects a list of objects from the database.
         /// </summary>
-        public T[] SelectList<T>(string query)
-        {
-			try
+		public IEnumerable<T> SelectList<T>(string query) where T : class, new()
+		{
+			using (DbCommand cmd = m_Connnection.CreateCommand())
 			{
-				using (DbCommand cmd = m_Connnection.CreateCommand())
+				cmd.CommandText = query;
+
+				if (m_Transaction != null)
 				{
-					cmd.CommandText = query;
+					cmd.Transaction = m_Transaction;
+				}
 
-					if (m_Transaction != null)
-					{
-						cmd.Transaction = m_Transaction;
-					}
-					
-					cmd.Prepare();
+				cmd.Prepare();
 
-					using (DbDataReader reader = cmd.ExecuteReader())
+				using (DbDataReader reader = cmd.ExecuteReader())
+				{
+					while (reader.Read())
 					{
-						List<T> list = new List<T>();
-						while(reader.Read())
-						{
-							list.Add(SqlObject.GetAs<T>(reader));
-						}
-						return list.ToArray();
+						yield return SqlObject.GetAs<T>(reader);
 					}
 				}
 			}
-			catch (Exception ex)
-			{
-				throw ex;
-			}
-        }
+		}
         
         /// <summary>
         /// Selects the first row and the first column in resultset.
         /// </summary>
-        public T SelectScalar<T>(string query)
-        {
-			try
+		public T SelectScalar<T>(string query) where T : IConvertible
+		{
+			using (DbCommand cmd = m_Connnection.CreateCommand())
 			{
-				using (DbCommand cmd = m_Connnection.CreateCommand())
+				cmd.CommandText = query;
+
+				if (m_Transaction != null)
 				{
-					cmd.CommandText = query;
+					cmd.Transaction = m_Transaction;
+				}
 
-					if (m_Transaction != null)
+				cmd.Prepare();
+
+				object obj = cmd.ExecuteScalar();
+
+				if (obj is T)
+				{
+					return (T)obj;
+				}
+				else
+				{
+					try
 					{
-						cmd.Transaction = m_Transaction;
+						return (T)Convert.ChangeType(obj, typeof(T));
 					}
-					
-					cmd.Prepare();
-
-					object obj = cmd.ExecuteScalar();
-
-					if (obj is T)
+					catch (InvalidCastException ex)
 					{
-						return (T)obj;
-					}
-					else
-					{
-						try
-						{
-							return (T)Convert.ChangeType(obj, typeof(T));
-						}
-						catch (InvalidCastException ex)
-						{
-							throw new Exception(String.Format("Invalid cast. Type '{0}' is required.", obj.GetType()), ex);
-							//return default(T);
-						}
+						throw new Exception(String.Format("Invalid cast. Type '{0}' required.", obj.GetType()), ex);
 					}
 				}
 			}
-			catch (Exception ex)
-			{
-				throw ex;
-			}
-        }
+		}
 
 		/// <summary>
 		/// Selects the first column and each row.
 		/// </summary>
-		public T[] SelectScalarList<T>(string query)
+		public IEnumerable<T> SelectScalarList<T>(string query) where T : IConvertible
 		{
-			try
+			using (DbCommand cmd = m_Connnection.CreateCommand())
 			{
-				using (DbCommand cmd = m_Connnection.CreateCommand())
+				cmd.CommandText = query;
+
+				if (m_Transaction != null)
 				{
-					cmd.CommandText = query;
+					cmd.Transaction = m_Transaction;
+				}
 
-					if (m_Transaction != null)
+				cmd.Prepare();
+
+				using (DbDataReader reader = cmd.ExecuteReader())
+				{
+					List<T> list = new List<T>();
+					while (reader.Read())
 					{
-						cmd.Transaction = m_Transaction;
-					}
 
-					cmd.Prepare();
+						object obj = reader.GetValue(0);
 
-					using (DbDataReader reader = cmd.ExecuteReader())
-					{
-						List<T> list = new List<T>();
-						while(reader.Read())
+						if (obj is T)
 						{
-
-							object obj = reader.GetValue(0);
-
-							if (obj is T)
+							list.Add((T)obj);
+						}
+						else
+						{
+							try
 							{
-								list.Add((T)obj);
+								list.Add((T)Convert.ChangeType(obj, typeof(T)));
 							}
-							else
+							catch (InvalidCastException ex)
 							{
-								try
-								{
-									list.Add((T)Convert.ChangeType(obj, typeof(T)));
-								}
-								catch (InvalidCastException ex)
-								{
-									throw new Exception(String.Format("Invalid cast. Type '{0}' is required.", obj.GetType()), ex);
-									//return default(T);
-								}
+								throw new Exception(String.Format("Invalid cast. Type '{0}' is required.", obj.GetType()), ex);
 							}
 						}
-						return list.ToArray();
 					}
+					return list.ToArray();
 				}
-			}
-			catch (Exception ex)
-			{
-				throw ex;
 			}
 		}
 		
@@ -283,25 +252,18 @@ namespace SqlDataMapper
 		/// </summary>
 		public int Insert(string query)
 		{
-			try
+			using (DbCommand cmd = m_Connnection.CreateCommand())
 			{
-				using (DbCommand cmd = m_Connnection.CreateCommand())
+				cmd.CommandText = query;
+
+				if (m_Transaction != null)
 				{
-					cmd.CommandText = query;
-
-					if (m_Transaction != null)
-					{
-						cmd.Transaction = m_Transaction;
-					}
-					
-					cmd.Prepare();
-
-					return cmd.ExecuteNonQuery();
+					cmd.Transaction = m_Transaction;
 				}
-			}
-			catch (Exception ex)
-			{
-				throw ex;
+
+				cmd.Prepare();
+
+				return cmd.ExecuteNonQuery();
 			}
 		}
 		
@@ -310,25 +272,18 @@ namespace SqlDataMapper
 		/// </summary>
 		public int Update(string query)
 		{
-			try
+			using (DbCommand cmd = m_Connnection.CreateCommand())
 			{
-				using (DbCommand cmd = m_Connnection.CreateCommand())
+				cmd.CommandText = query;
+
+				if (m_Transaction != null)
 				{
-					cmd.CommandText = query;
-
-					if (m_Transaction != null)
-					{
-						cmd.Transaction = m_Transaction;
-					}
-					
-					cmd.Prepare();
-
-					return cmd.ExecuteNonQuery();
+					cmd.Transaction = m_Transaction;
 				}
-			}
-			catch (Exception ex)
-			{
-				throw ex;
+
+				cmd.Prepare();
+
+				return cmd.ExecuteNonQuery();
 			}
 		}
 		
@@ -337,25 +292,18 @@ namespace SqlDataMapper
 		/// </summary>
 		public int Delete(string query)
 		{
-			try
+			using (DbCommand cmd = m_Connnection.CreateCommand())
 			{
-				using (DbCommand cmd = m_Connnection.CreateCommand())
+				cmd.CommandText = query;
+
+				if (m_Transaction != null)
 				{
-					cmd.CommandText = query;
-
-					if (m_Transaction != null)
-					{
-						cmd.Transaction = m_Transaction;
-					}
-					
-					cmd.Prepare();
-
-					return cmd.ExecuteNonQuery();
+					cmd.Transaction = m_Transaction;
 				}
-			}
-			catch (Exception ex)
-			{
-				throw ex;
+
+				cmd.Prepare();
+
+				return cmd.ExecuteNonQuery();
 			}
 		}
 	}
