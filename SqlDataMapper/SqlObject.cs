@@ -141,14 +141,14 @@ namespace SqlDataMapper
 		/// <typeparam name="TProperty">The target property.</typeparam>
 		/// <param name="propertyInfo">The property info.</param>
 		/// <returns>The property.</returns>
-		static private TProperty GetPropertyAttribute<TProperty>(PropertyInfo propertyInfo) where TProperty: ISqlMapperAttribute
+		static private TProperty GetPropertyAttribute<TProperty>(PropertyInfo propertyInfo) where TProperty: ISqlMapperAttribute, new()
 		{
 			object[] attr = propertyInfo.GetCustomAttributes(typeof(TProperty), true);
 			if (attr != null && attr.Length > 0)
 			{
 				return (TProperty)attr[0];
 			}
-			return default(TProperty);
+			return new TProperty();
 		}
 
 		/// <summary>
@@ -163,7 +163,7 @@ namespace SqlDataMapper
 			{
 				return attr[0] as SqlMapperDebugAttribute;
 			}
-			return default(SqlMapperDebugAttribute);
+			return new SqlMapperDebugAttribute();
 		}
 
 		/// <summary>

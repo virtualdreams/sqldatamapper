@@ -115,6 +115,14 @@ namespace SqlDataMapper
 		public SqlMapperDebugCallback Callback { get; private set; }
 
 		/// <summary>
+		/// Debug a class. Disabled state.
+		/// </summary>
+		internal SqlMapperDebugAttribute()
+		{
+			Enabled = false;
+		}
+
+		/// <summary>
 		/// Debug a class.
 		/// </summary>
 		/// <param name="type">The type of the source class.</param>
