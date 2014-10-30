@@ -9,8 +9,17 @@ using System.Diagnostics;
 
 namespace SqlDataMapper
 {
+	/// <summary>
+	/// Convert a data reader to class and class to SqlParameter class.
+	/// </summary>
 	public class SqlObject
 	{
+		/// <summary>
+		/// Map DBDataReader to class.
+		/// </summary>
+		/// <typeparam name="TDestination">The target class.</typeparam>
+		/// <param name="dataReader">The data reader object.</param>
+		/// <returns>New instance of TDestination.</returns>
 		static public TDestination GetAs<TDestination>(DbDataReader dataReader) where TDestination: class, new()
 		{
 			#region Object debug
@@ -73,6 +82,12 @@ namespace SqlDataMapper
 			return newObject;
 		}
 
+		/// <summary>
+		/// Convert a class to a SqlParameter class.
+		/// </summary>
+		/// <typeparam name="TSource">The source class.</typeparam>
+		/// <param name="source">The source.</param>
+		/// <returns>New instance of SqlParameter</returns>
 		static public SqlParameter GetAsParameter<TSource>(TSource source) where TSource: class, new()
 		{
 			SqlParameter param = new SqlParameter();
@@ -106,6 +121,11 @@ namespace SqlDataMapper
 			return param;
 		}
 
+		/// <summary>
+		/// Convert DBNull to null.
+		/// </summary>
+		/// <param name="val">A value</param>
+		/// <returns>A converted value.</returns>
 		private static object GetValue(object val)
 		{
 			if (val == DBNull.Value)
@@ -115,6 +135,12 @@ namespace SqlDataMapper
 			return val;
 		}
 
+		/// <summary>
+		/// Get property of a member.
+		/// </summary>
+		/// <typeparam name="TProperty">The target property.</typeparam>
+		/// <param name="propertyInfo">The property info.</param>
+		/// <returns>The property.</returns>
 		static private TProperty GetPropertyAttribute<TProperty>(PropertyInfo propertyInfo) where TProperty: ISqlMapperAttribute
 		{
 			object[] attr = propertyInfo.GetCustomAttributes(typeof(TProperty), true);
@@ -125,6 +151,11 @@ namespace SqlDataMapper
 			return default(TProperty);
 		}
 
+		/// <summary>
+		/// Get property of a class.
+		/// </summary>
+		/// <typeparam name="TSource">The source class.</typeparam>
+		/// <returns>The attribute.</returns>
 		static private SqlMapperDebugAttribute GetObjectAttribute<TSource>() where TSource : class, new()
 		{
 			object[] attr = typeof(TSource).GetCustomAttributes(typeof(SqlMapperDebugAttribute), true);
@@ -135,6 +166,11 @@ namespace SqlDataMapper
 			return default(SqlMapperDebugAttribute);
 		}
 
+		/// <summary>
+		/// Get the column names of DbDataReader object.
+		/// </summary>
+		/// <param name="dataReader"></param>
+		/// <returns></returns>
 		static private IEnumerable<string> ColumnNames(DbDataReader dataReader)
 		{
 			for (int i = 0; i < dataReader.FieldCount; ++i)
