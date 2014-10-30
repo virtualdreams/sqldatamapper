@@ -1,26 +1,41 @@
+<#
+	Notes:
+		Author: Thomas Kindler
+		Date:	10.10.2014
+	
+	Parameters
+		file: path to file
+		git: path to git binary
+	
+	Example:
+		PS C:\ git-hash.ps1 -file "/foo/bar"
+		powershell -file "/path/to/git-hash.ps1" -file "/path/to/file" [-git "/path/to/git"]
+#>
 param
 (
-	[string]$file
+	[string]$file,
+	[string]$git = 'C:\Program Files (x86)\Git\bin\git.exe'
 )
 
-if(!$file)
+### test if target file exists
+if(!$file -or !(Test-Path $file))
 {
-	Write-Host "Path is not set."
+	Write-Host "Path is not set or found."
 	return
 }
 
-if(!(Test-Path $file))
-{
-	Write-Host "Path not found."
-	return
-}
-
-# set git exe as alias - TODO
-New-item alias:git -value 'C:\Program Files (x86)\Git\bin\git.exe' | Out-Null
-
-if(!(Get-Command git -TotalCount 1 -ErrorAction SilentlyContinue))
+### test if git executeable exists
+if(!(Test-Path $git))
 {
 	Write-Host "git command could not be found."
+	return
+}
+
+### set git exe as alias
+New-item alias:git -value $git | Out-Null
+if(!(Get-Command git -TotalCount 1 -ErrorAction SilentlyContinue))
+{
+	Write-Host "git alias could not be found."
 	return
 }
 
