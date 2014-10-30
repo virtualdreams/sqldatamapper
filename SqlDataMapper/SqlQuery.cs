@@ -241,7 +241,7 @@ namespace SqlDataMapper
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
 		/// <returns>The instance</returns>
-		public SqlQuery SetEntity<T>(string name, T value)
+		public SqlQuery SetEntity<T>(string name, T value) where T : IConvertible
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
