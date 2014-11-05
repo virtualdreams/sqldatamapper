@@ -52,15 +52,15 @@ namespace SqlDataMapper
 					columnName = attr.Alias;
 				}
 
-				object value = GetValue(dataReader[columnName]);
-
-				if (attr.Flag == SqlMapperFlags.NotNull && value == null)
-				{
-					throw new SqlDataMapperException(String.Format("The property {0}.{1} can't set to a null value.", newObject.GetType().FullName, columnName));
-				}
-
 				if(columns.Contains(columnName.ToLower()))
 				{
+					object value = GetValue(dataReader[columnName]);
+
+					if (attr.Flag == SqlMapperFlags.NotNull && value == null)
+					{
+						throw new SqlDataMapperException(String.Format("The property {0}.{1} must not be null.", newObject.GetType().FullName, columnName));
+					}
+
 					try
 					{
 						typeof(TDestination).InvokeMember(property.Name, BindingFlags.SetProperty, null, newObject, new object[] { value });
@@ -68,14 +68,14 @@ namespace SqlDataMapper
 					catch (Exception ex)
 					{
 						if (ex is MissingMethodException)
-							throw new SqlDataMapperException(String.Format("Property {0}.{1} has the wrong type. Type '{2}' required", newObject.GetType().FullName, columnName, dataReader[columnName].GetType()), ex);
+							throw new SqlDataMapperException(String.Format("The property {0}.{1} has the wrong type. Type '{2}' required", newObject.GetType().FullName, columnName, dataReader[columnName].GetType()), ex);
 						else
 							throw;
 					}
 				}
 				else if (attr.Flag == SqlMapperFlags.Required || attr.Flag == SqlMapperFlags.NotNull)
 				{
-					throw new SqlDataMapperException(String.Format("The property {0}.{1} is required and must exists in result set.", newObject.GetType().FullName, columnName));
+					throw new SqlDataMapperException(String.Format("The property {0}.{1} is required and must not be null.", newObject.GetType().FullName, columnName));
 				}
 			}
 
