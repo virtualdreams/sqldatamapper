@@ -29,7 +29,7 @@ namespace SqlDataMapper
 		#region Properties
 
 		/// <summary>
-		/// Assembly version
+		/// Product version
 		/// </summary>
 		public static string Version
 		{
@@ -37,7 +37,8 @@ namespace SqlDataMapper
 			{
 				Assembly assembly = Assembly.GetExecutingAssembly();
 				FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
-				return String.Format("{0}", fvi.FileVersion);
+
+				return fvi.ProductVersion;
 			}
 		}
 
