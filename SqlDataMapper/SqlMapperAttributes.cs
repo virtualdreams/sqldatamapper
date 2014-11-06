@@ -24,12 +24,12 @@ namespace SqlDataMapper
 		Ignore,
 
 		/// <summary>
-		/// The column must exists in result set.
+		/// The column or member is required and must not be null.
 		/// </summary>
 		Required,
 
 		/// <summary>
-		/// The column must exists in result set and can't null.
+		/// The column or member must not be null.
 		/// </summary>
 		NotNull
 	}

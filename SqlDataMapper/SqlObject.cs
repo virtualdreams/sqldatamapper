@@ -112,7 +112,7 @@ namespace SqlDataMapper
 
 				if(value == null && (attr.Flag == SqlMapperFlags.NotNull || attr.Flag == SqlMapperFlags.Required))
 				{
-					throw new SqlDataMapperException(String.Format("The property {0}.{1} is required and must set.", source.GetType().FullName, columnName));
+					throw new SqlDataMapperException(String.Format("The property {0}.{1} must not be null.", source.GetType().FullName, columnName));
 				}
 
 				param.Add(columnName, value);
