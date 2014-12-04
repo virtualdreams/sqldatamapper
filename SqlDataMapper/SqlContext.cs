@@ -140,7 +140,7 @@ namespace SqlDataMapper
 		{
 			if (!m_IsTransactionSession)
 			{
-				throw new SqlDataMapperException("SqlMapper could not invoke CommitTransaction(). No transaction was started. Call BeginTransaction() first.");
+				throw new SqlDataMapperException("SqlMapper could not invoke RollbackTransaction(). No transaction was started. Call BeginTransaction() first.");
 			}
 
 			try
