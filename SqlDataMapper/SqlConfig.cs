@@ -22,12 +22,23 @@ namespace SqlDataMapper
 	{
 		private HybridDictionary m_Statements = new HybridDictionary();
 		private HybridDictionary m_Providers = new HybridDictionary();
-		private bool m_ValidationCheck = false;
-		private string _defaultProvider = null;
-		private string _defaultConnectionString = null;
+
+		/// <summary>
+		/// Enable or disable xml validation.
+		/// </summary>
+		public bool ValidationCheck { get; set; }
+
+		/// <summary>
+		/// Get or set default provider id.
+		/// </summary>
+		public string DefaultProvider { get; set; }
+
+		/// <summary>
+		/// Get or set default connection string.
+		/// </summary>
+		public string DefaultConnectionString { get; set; }
 
 		#region Properties
-
 		/// <summary>
 		/// Product version
 		/// </summary>
@@ -41,7 +52,6 @@ namespace SqlDataMapper
 				return fvi.ProductVersion;
 			}
 		}
-
 		#endregion
 
 		#region Structures
@@ -57,28 +67,7 @@ namespace SqlDataMapper
 		};
 		#endregion
 		
-		#region Validation methods
-		
-		/// <summary>
-		/// Enable or disable xml validation.
-		/// Mono 2.6.x has a bug on GetResourceFromStream().
-		/// This feature is completely disabled at the moment.
-		/// </summary>
-		public bool ValidationCheck
-		{
-			get
-			{
-				return m_ValidationCheck;
-			}
-			set
-			{
-				m_ValidationCheck = value;
-			}
-		}
-		#endregion
-		
 		#region Constructors
-		
 		/// <summary>
 		/// Constructor for auto configuration (zeroconf).
 		/// Searchs for <c>SqlMapperConfig.xml</c> file, otherwise throws an exception.
@@ -87,29 +76,29 @@ namespace SqlDataMapper
             :this(false)
 		{ }
 
-        /// <summary>
-        /// Constructor for auto configuration (zeroconf).
-        /// Searchs for <c>SqlMapperConfig.xml</c> file, otherwise throws an exception.
-        /// If createEmpty is set to true, an empty instance was created.
-        /// </summary>
-        /// <param name="createEmpty">Initialzes an empty instance or zeroconf</param>
-        public SqlConfig(bool createEmpty)
-        {
-            if (createEmpty)
-                return;
-            
-            string file = ConvertToFullPath("SqlMapperConfig.xml");
+		/// <summary>
+		/// Constructor for auto configuration (zeroconf).
+		/// Searchs for <c>SqlMapperConfig.xml</c> file, otherwise throws an exception.
+		/// If createEmpty is set to true, an empty instance was created.
+		/// </summary>
+		/// <param name="createEmpty">Initialzes an empty instance or zeroconf</param>
+		public SqlConfig(bool createEmpty)
+		{
+			if (createEmpty)
+				return;
 
-            FileInfo fi = new FileInfo(file);
-            if (fi.Exists)
-            {
-                LoadConfiguration(fi.FullName);
-            }
-            else
-            {
-                throw new SqlDataMapperException("Can't find 'SqlMapperConfig.xml' for autoconfiguration.");
-            }
-        }
+			string file = ConvertToFullPath("SqlMapperConfig.xml");
+
+			FileInfo fi = new FileInfo(file);
+			if (fi.Exists)
+			{
+				LoadConfiguration(fi.FullName);
+			}
+			else
+			{
+				throw new SqlDataMapperException("Can't find 'SqlMapperConfig.xml' for autoconfiguration.");
+			}
+		}
 		
 		/// <summary>
 		/// Constructor for auto configuration.
@@ -125,7 +114,6 @@ namespace SqlDataMapper
 		#endregion
 
 		#region Configuration methods
-		
 		/// <summary>
 		/// Load the configuration xml file.
 		/// </summary>
@@ -216,10 +204,10 @@ namespace SqlDataMapper
 			
 			//Load sql queries
 			var maps = from map in doc.Element("sqlMapConfig").Element("sqlMaps").Elements("sqlMap")
-					   select new
-					   {
-							file = map.Attribute("file").Value
-					   };
+			select new
+			{
+				file = map.Attribute("file").Value
+			};
 
 			foreach (var map in maps)
 			{
@@ -227,9 +215,9 @@ namespace SqlDataMapper
 
 			    LoadQueries(file);
 			}
-			
-			_defaultProvider = providerName;
-			_defaultConnectionString = connectionString;
+
+			DefaultProvider = providerName;
+			DefaultConnectionString = connectionString;
 		}
 		
 		/// <summary>
@@ -407,13 +395,13 @@ namespace SqlDataMapper
 		/// </summary>
 		public SqlContext CreateContext()
 		{
-			if (String.IsNullOrEmpty(_defaultProvider))
+			if (String.IsNullOrEmpty(DefaultProvider))
 				throw new SqlDataMapperException("No default provider configured.");
 
-			if (String.IsNullOrEmpty(_defaultConnectionString))
+			if (String.IsNullOrEmpty(DefaultConnectionString))
 				throw new SqlDataMapperException("No default connection string configured.");
 
-			return CreateContext(_defaultProvider, _defaultConnectionString);
+			return CreateContext(DefaultProvider, DefaultConnectionString);
 		}
 		
 		/// <summary>
@@ -493,38 +481,14 @@ namespace SqlDataMapper
 		/// <param name="provider">The object contains the provider informations</param>
 		private void AddProvider(string id, Provider provider)
 		{
-            if (String.IsNullOrEmpty(id))
-                throw new ArgumentNullException("id");
-            
-            if (m_Providers.Contains(id))
+			if (String.IsNullOrEmpty(id))
+				throw new ArgumentNullException("id");
+
+			if (m_Providers.Contains(id))
 			{
 				throw new SqlDataMapperException(String.Format("The provider pool already contains a provider named '{0}'", id));
 			}
 			this.m_Providers.Add(id, provider);
-		}
-
-		/// <summary>
-		/// Set the default provider.
-		/// </summary>
-		/// <param name="id">A id from the provider pool</param>
-		public void SetDefaultProvider(string id)
-		{
-			if (String.IsNullOrEmpty(id))
-				throw new ArgumentNullException("id");
-
-			_defaultProvider = id;
-		}
-
-		/// <summary>
-		/// Set the default connection string.
-		/// </summary>
-		/// <param name="connectionString">A connection string</param>
-		public void SetDefaultConnectionString(string connectionString)
-		{
-			if (String.IsNullOrEmpty(connectionString))
-				throw new ArgumentNullException("connectionString");
-
-			_defaultConnectionString = connectionString;
 		}
 		
 		/// <summary>
@@ -558,11 +522,11 @@ namespace SqlDataMapper
 		{
 			//get all insert statements		
 			var inserts = from query in doc.Element("sqlMap").Elements("insert")
-			                select new 
-			                {
-			                    id = query.Attribute("id").Value,
-			                    value = query.Value
-			                };
+			select new 
+			{
+				id = query.Attribute("id").Value,
+				value = query.Value
+			};
 						  
 			foreach(var select in inserts)
 			{
@@ -581,11 +545,11 @@ namespace SqlDataMapper
 		{
 			//get all update statements				
 			var updates = from query in doc.Element("sqlMap").Elements("update")
-			                select new 
-			                {
-			                    id = query.Attribute("id").Value,
-			                    value = query.Value
-			                };
+			select new 
+			{
+				id = query.Attribute("id").Value,
+				value = query.Value
+			};
 						  
 			foreach(var select in updates)
 			{
@@ -604,11 +568,11 @@ namespace SqlDataMapper
 		{
 			//get all delete statements
 			var deletes = from query in doc.Element("sqlMap").Elements("delete")
-			                select new 
-			                {
-			                    id = query.Attribute("id").Value,
-			                    value = query.Value
-			                };
+			select new 
+			{
+				id = query.Attribute("id").Value,
+				value = query.Value
+			};
 						  
 			foreach(var select in deletes)
 			{
@@ -627,11 +591,11 @@ namespace SqlDataMapper
 		{
 			//get all delete statements
 			var parts = from query in doc.Element("sqlMap").Elements("part")
-						  select new
-						  {
-							  id = query.Attribute("id").Value,
-							  value = query.Value
-						  };
+			select new
+			{
+				id = query.Attribute("id").Value,
+				value = query.Value
+			};
 
 			foreach (var select in parts)
 			{
@@ -649,10 +613,10 @@ namespace SqlDataMapper
 		private void LoadInclude(XDocument doc)
 		{
 			var include = from query in doc.Element("sqlMap").Elements("include")
-							select new
-							{
-								file = query.Attribute("file").Value
-							};
+			select new
+			{
+				file = query.Attribute("file").Value
+			};
 							
 			foreach(var select in include)
 			{
