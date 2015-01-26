@@ -195,12 +195,12 @@ namespace SqlDataMapper
 		/// <typeparam name="TSource">The object type</typeparam>
 		/// <param name="source">The object</param>
 		/// <returns>This instance</returns>
-		public SqlQuery SetEntities<TSource>(TSource source) where TSource: class, new()
+		public SqlQuery SetParameter<TSource>(TSource source) where TSource: class, new()
 		{
 			if(source == null)
 				throw new ArgumentNullException("obj");
 			
-			return SetEntities(SqlObject.GetAsParameter<TSource>(source));
+			return SetParameter(SqlObject.GetAsParameter<TSource>(source));
 		}
 		
 		/// <summary>
@@ -208,7 +208,7 @@ namespace SqlDataMapper
 		/// </summary>
 		/// <param name="parameters">A SqlParameter object</param>
 		/// <returns>This instance</returns>
-		public SqlQuery SetEntities(SqlParameter parameters)
+		public SqlQuery SetParameter(SqlParameter parameters)
 		{
 			if(parameters != null)
 			{
@@ -226,7 +226,7 @@ namespace SqlDataMapper
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
 		/// <returns>The instance</returns>
-		public SqlQuery SetEntity(string name, object value)
+		public SqlQuery SetParameter(string name, object value)
 		{
 			if(String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
@@ -241,7 +241,7 @@ namespace SqlDataMapper
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
 		/// <returns>The instance</returns>
-		public SqlQuery SetEntity<T>(string name, T value) where T : IConvertible
+		public SqlQuery SetParameter<TSource>(string name, TSource value) where TSource : IConvertible
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
@@ -256,7 +256,7 @@ namespace SqlDataMapper
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
 		/// <returns>This instance</returns>
-		public SqlQuery SetString(string name, string value)
+		public SqlQuery SetParameter(string name, string value)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
@@ -271,7 +271,7 @@ namespace SqlDataMapper
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
 		/// <returns>This instance</returns>
-		public SqlQuery SetInt(string name, int value)
+		public SqlQuery SetParameter(string name, int value)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
@@ -286,7 +286,7 @@ namespace SqlDataMapper
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
 		/// <returns>This instance</returns>
-		public SqlQuery SetLong(string name, long value)
+		public SqlQuery SetParameter(string name, long value)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
@@ -301,7 +301,7 @@ namespace SqlDataMapper
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
 		/// <returns>This instance</returns>
-		public SqlQuery SetSingle(string name, float value)
+		public SqlQuery SetParameter(string name, float value)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
@@ -316,7 +316,7 @@ namespace SqlDataMapper
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
 		/// <returns>This instance</returns>
-		public SqlQuery SetDouble(string name, double value)
+		public SqlQuery SetParameter(string name, double value)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
@@ -325,20 +325,20 @@ namespace SqlDataMapper
 			return this;
 		}
 
-        /// <summary>
-        /// Set a single named parameter. The value must a decimal
-        /// </summary>
-        /// <param name="name">The named parameter</param>
-        /// <param name="value">The value</param>
-        /// <returns>This instance</returns>
-        public SqlQuery SetDecimal(string name, decimal value)
-        {
-            if (String.IsNullOrEmpty(name))
+		/// <summary>
+		/// Set a single named parameter. The value must a decimal
+		/// </summary>
+		/// <param name="name">The named parameter</param>
+		/// <param name="value">The value</param>
+		/// <returns>This instance</returns>
+		public SqlQuery SetParameter(string name, decimal value)
+		{
+			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 
 			this.QueryString = Replace(name, GetValue(value));
 			return this;
-        }
+		}
 
 		/// <summary>
 		/// Set a single named parameter. The value must a char
@@ -346,7 +346,7 @@ namespace SqlDataMapper
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
 		/// <returns>This instance</returns>
-		public SqlQuery SetChar(string name, char value)
+		public SqlQuery SetParameter(string name, char value)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
@@ -361,7 +361,7 @@ namespace SqlDataMapper
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
 		/// <returns>This instance</returns>
-		public SqlQuery SetDateTime(string name, DateTime value)
+		public SqlQuery SetParameter(string name, DateTime value)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
@@ -376,7 +376,7 @@ namespace SqlDataMapper
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
 		/// <returns>The instance</returns>
-		public SqlQuery SetGuid(string name, Guid value)
+		public SqlQuery SetParameter(string name, Guid value)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
@@ -392,7 +392,7 @@ namespace SqlDataMapper
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
 		/// <returns>This instance</returns>
-		public SqlQuery SetBinary(string name, byte[] value)
+		public SqlQuery SetParameter(string name, byte[] value)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
@@ -405,7 +405,7 @@ namespace SqlDataMapper
 		}
 		
 		/// <summary>
-		/// Add a sql query object
+		/// Add sql query object an return a new instance.
 		/// </summary>
 		/// <param name="query">A sql object contains the query</param>
 		/// <returns>A new instance</returns>
@@ -418,7 +418,7 @@ namespace SqlDataMapper
 		}
 		
 		/// <summary>
-		/// Add a sql query string
+		/// Add sql query string an return a new instance.
 		/// </summary>
 		/// <param name="query">A query or a fragment of a query</param>
 		/// <returns>A new instance</returns>
@@ -431,7 +431,7 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Appends a sql query object
+		/// Appends sql query object to this instance.
 		/// </summary>
 		/// <param name="query">A sql object contains the query</param>
 		/// <returns>This instance</returns>
@@ -444,7 +444,7 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Appends a sql query string
+		/// Appends sql query string to this instance.
 		/// </summary>
 		/// <param name="query">A query or a fragment of a query</param>
 		/// <returns>This instance</returns>
@@ -517,13 +517,13 @@ namespace SqlDataMapper
 		/// <returns>A formatted sql string</returns>
 		private string Format(string query)
 		{
-            string tmp = query;
+			string tmp = query;
 
-            //remove coments
-            tmp = Regex.Replace(tmp, @"(--.*)$", " ", RegexOptions.Multiline);
-            tmp = Regex.Replace(tmp, @"(/\*.*?\*/)", " ", RegexOptions.Singleline);
+			//remove coments
+			tmp = Regex.Replace(tmp, @"(--.*)$", " ", RegexOptions.Multiline);
+			tmp = Regex.Replace(tmp, @"(/\*.*?\*/)", " ", RegexOptions.Singleline);
 
-            return tmp;
+			return tmp;
 		}
 
 		/// <summary>
