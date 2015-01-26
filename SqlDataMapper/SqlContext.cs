@@ -10,9 +10,9 @@ namespace SqlDataMapper
 	/// </summary>
 	public class SqlContext
 	{
-		private ISqlProvider m_Provider = null;
-		private bool m_IsTransactionSession = false;
-		private bool m_ParameterCheck = false;
+		private ISqlProvider Provider { get; set; }
+		private bool IsTransactionSession { get; set; }
+		private bool ParameterCheck { get; set; }
 		
 		#region Constructors
 		/// <summary>
@@ -32,7 +32,7 @@ namespace SqlDataMapper
 			if (String.IsNullOrEmpty(connectionString))
 				throw new ArgumentNullException("connectionString");
 			
-			m_Provider = new SqlProvider(assemblyName, connectionClass, connectionString);
+			Provider = new SqlProvider(assemblyName, connectionClass, connectionString);
 		}
 		
 		/// <summary>
@@ -44,24 +44,7 @@ namespace SqlDataMapper
 			if (provider == null)
 				throw new ArgumentNullException("provider");
 			
-			m_Provider = provider;
-		}
-		#endregion
-		
-		#region member
-		/// <summary>
-		/// Enable or disable parameter check after replace placeholders
-		/// </summary>
-		public bool ParameterCheck
-		{
-			get
-			{
-				return m_ParameterCheck;
-			}
-			set
-			{
-				m_ParameterCheck = value;
-			}
+			Provider = provider;
 		}
 		#endregion
 
@@ -75,21 +58,21 @@ namespace SqlDataMapper
 		/// </remarks>
 		public void BeginTransaction()
 		{
-			if (m_IsTransactionSession)
+			if (IsTransactionSession)
 			{
 				throw new SqlDataMapperException("SqlMapper could not invoke BeginTransaction(). A transaction is already started. Call CommitTransaction() or RollbackTransaction() first.");
 			}
 
 			try
 			{
-				m_Provider.Open();
-				m_IsTransactionSession = true;
-				m_Provider.BeginTransaction();
+				Provider.Open();
+				IsTransactionSession = true;
+				Provider.BeginTransaction();
 			}
 			catch (Exception ex)
 			{
-				m_Provider.Close();
-				m_IsTransactionSession = false;
+				Provider.Close();
+				IsTransactionSession = false;
 				throw ex;
 			}
 		}
@@ -102,20 +85,20 @@ namespace SqlDataMapper
 		/// </remarks>
 		public void CommitTransaction()
 		{
-			if (!m_IsTransactionSession)
+			if (!IsTransactionSession)
 			{
 				throw new SqlDataMapperException("SqlMapper could not invoke CommitTransaction(). No transaction was started. Call BeginTransaction() first.");
 			}
 
 			try
 			{
-				m_Provider.CommitTransaction();
+				Provider.CommitTransaction();
 			}
 			catch (Exception ex)
 			{
 				try
 				{
-					m_Provider.RollbackTransaction();
+					Provider.RollbackTransaction();
 				}
 				catch (Exception iex)
 				{
@@ -125,8 +108,8 @@ namespace SqlDataMapper
 			}
 			finally
 			{
-				m_IsTransactionSession = false;
-				m_Provider.Close();
+				IsTransactionSession = false;
+				Provider.Close();
 			}
 		}
 
@@ -138,14 +121,14 @@ namespace SqlDataMapper
 		/// </remarks>
 		public void RollbackTransaction()
 		{
-			if (!m_IsTransactionSession)
+			if (!IsTransactionSession)
 			{
 				throw new SqlDataMapperException("SqlMapper could not invoke RollbackTransaction(). No transaction was started. Call BeginTransaction() first.");
 			}
 
 			try
 			{
-				m_Provider.RollbackTransaction();
+				Provider.RollbackTransaction();
 			}
 			catch (Exception ex)
 			{
@@ -153,8 +136,8 @@ namespace SqlDataMapper
 			}
 			finally
 			{
-				m_IsTransactionSession = false;
-				m_Provider.Close();
+				IsTransactionSession = false;
+				Provider.Close();
 			}
 		}
 
@@ -169,13 +152,13 @@ namespace SqlDataMapper
 			bool flag = false;
 			try
 			{
-				if (!m_IsTransactionSession)
+				if (!IsTransactionSession)
 				{
-					m_Provider.Open();
+					Provider.Open();
 					flag = true;
 				}
 
-				return m_Provider.Select<TDestination>(query.Check(this.ParameterCheck).QueryString);
+				return Provider.Select<TDestination>(query.Check(this.ParameterCheck).QueryString);
 			}
 			catch (Exception ex)
 			{
@@ -185,7 +168,7 @@ namespace SqlDataMapper
 			{
 				if (flag)
 				{
-					m_Provider.Close();
+					Provider.Close();
 				}
 			}
 		}
@@ -201,13 +184,13 @@ namespace SqlDataMapper
 			bool flag = false;
 			try
 			{
-				if (!m_IsTransactionSession)
+				if (!IsTransactionSession)
 				{
-					m_Provider.Open();
+					Provider.Open();
 					flag = true;
 				}
 
-				return m_Provider.SelectList<TDestination>(query.Check(this.ParameterCheck).QueryString).ToArray();
+				return Provider.SelectList<TDestination>(query.Check(this.ParameterCheck).QueryString).ToArray();
 			}
 			catch (Exception ex)
 			{
@@ -217,7 +200,7 @@ namespace SqlDataMapper
 			{
 				if (flag)
 				{
-					m_Provider.Close();
+					Provider.Close();
 				}
 			}
 		}
@@ -233,13 +216,13 @@ namespace SqlDataMapper
 			bool flag = false;
 			try
 			{
-				if (!m_IsTransactionSession)
+				if (!IsTransactionSession)
 				{
-					m_Provider.Open();
+					Provider.Open();
 					flag = true;
 				}
 
-				return m_Provider.SelectScalar<TDestination>(query.Check(this.ParameterCheck).QueryString);
+				return Provider.SelectScalar<TDestination>(query.Check(this.ParameterCheck).QueryString);
 			}
 			catch (Exception ex)
 			{
@@ -249,7 +232,7 @@ namespace SqlDataMapper
 			{
 				if (flag)
 				{
-					m_Provider.Close();
+					Provider.Close();
 				}
 			}
 		}
@@ -265,13 +248,13 @@ namespace SqlDataMapper
 			bool flag = false;
 			try
 			{
-				if (!m_IsTransactionSession)
+				if (!IsTransactionSession)
 				{
-					m_Provider.Open();
+					Provider.Open();
 					flag = true;
 				}
 
-				return m_Provider.SelectScalarList<TDestination>(query.Check(this.ParameterCheck).QueryString).ToArray();
+				return Provider.SelectScalarList<TDestination>(query.Check(this.ParameterCheck).QueryString).ToArray();
 			}
 			catch (Exception ex)
 			{
@@ -281,7 +264,7 @@ namespace SqlDataMapper
 			{
 				if (flag)
 				{
-					m_Provider.Close();
+					Provider.Close();
 				}
 			}
 		}
@@ -296,13 +279,13 @@ namespace SqlDataMapper
 			bool flag = false;
 			try
 			{
-				if (!m_IsTransactionSession)
+				if (!IsTransactionSession)
 				{
-					m_Provider.Open();
+					Provider.Open();
 					flag = true;
 				}
 
-				return m_Provider.Insert(query.Check(this.ParameterCheck).QueryString);
+				return Provider.Insert(query.Check(this.ParameterCheck).QueryString);
 			}
 			catch (Exception ex)
 			{
@@ -312,7 +295,7 @@ namespace SqlDataMapper
 			{
 				if (flag)
 				{
-					m_Provider.Close();
+					Provider.Close();
 				}
 			}
 		}
@@ -327,13 +310,13 @@ namespace SqlDataMapper
 			bool flag = false;
 			try
 			{
-				if (!m_IsTransactionSession)
+				if (!IsTransactionSession)
 				{
-					m_Provider.Open();
+					Provider.Open();
 					flag = true;
 				}
 
-				return m_Provider.Update(query.Check(this.ParameterCheck).QueryString);
+				return Provider.Update(query.Check(this.ParameterCheck).QueryString);
 			}
 			catch (Exception ex)
 			{
@@ -343,7 +326,7 @@ namespace SqlDataMapper
 			{
 				if (flag)
 				{
-					m_Provider.Close();
+					Provider.Close();
 				}
 			}
 		}
@@ -358,13 +341,13 @@ namespace SqlDataMapper
 			bool flag = false;
 			try
 			{
-				if (!m_IsTransactionSession)
+				if (!IsTransactionSession)
 				{
-					m_Provider.Open();
+					Provider.Open();
 					flag = true;
 				}
 
-				return m_Provider.Delete(query.Check(this.ParameterCheck).QueryString);
+				return Provider.Delete(query.Check(this.ParameterCheck).QueryString);
 			}
 			catch (Exception ex)
 			{
@@ -374,7 +357,7 @@ namespace SqlDataMapper
 			{
 				if (flag)
 				{
-					m_Provider.Close();
+					Provider.Close();
 				}
 			}
 		}
