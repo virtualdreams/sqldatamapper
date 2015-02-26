@@ -179,7 +179,7 @@ namespace SqlDataMapper
 		/// <typeparam name="TDestination">The object type</typeparam>
 		/// <param name="query">The query object</param>
 		/// <returns>A list ob objects</returns>
-		public TDestination[] QueryForList<TDestination>(ISqlQuery query) where TDestination : class, new()
+		public IEnumerable<TDestination> QueryForList<TDestination>(ISqlQuery query) where TDestination : class, new()
 		{
 			bool flag = false;
 			try
@@ -190,7 +190,7 @@ namespace SqlDataMapper
 					flag = true;
 				}
 
-				return Provider.SelectList<TDestination>(query.Check(this.ParameterCheck).QueryString).ToArray();
+				return Provider.SelectList<TDestination>(query.Check(this.ParameterCheck).QueryString);
 			}
 			catch (Exception ex)
 			{
@@ -243,7 +243,7 @@ namespace SqlDataMapper
 		/// <typeparam name="TDestination">The object</typeparam>
 		/// <param name="query">The query object</param>
 		/// <returns>A list of single objects</returns>
-		public TDestination[] QueryForScalarList<TDestination>(ISqlQuery query) where TDestination : IConvertible
+		public IEnumerable<TDestination> QueryForScalarList<TDestination>(ISqlQuery query) where TDestination : IConvertible
 		{
 			bool flag = false;
 			try
@@ -254,7 +254,7 @@ namespace SqlDataMapper
 					flag = true;
 				}
 
-				return Provider.SelectScalarList<TDestination>(query.Check(this.ParameterCheck).QueryString).ToArray();
+				return Provider.SelectScalarList<TDestination>(query.Check(this.ParameterCheck).QueryString);
 			}
 			catch (Exception ex)
 			{
