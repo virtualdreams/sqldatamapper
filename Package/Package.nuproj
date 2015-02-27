@@ -17,8 +17,8 @@
     <Compile Include="Package.nuspec" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SqlDataMapper\SqlDataMapper_VS2010.csproj">
-      <Name>SqlDataMapper_VS2010</Name>
+    <ProjectReference Include="..\SqlDataMapper\SqlDataMapper.csproj">
+      <Name>SqlDataMapper</Name>
       <Project>{17647789-c475-4b42-9227-ab04ebe73bf5}</Project>
       <Private>True</Private>
     </ProjectReference>

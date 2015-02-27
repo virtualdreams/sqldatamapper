@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlDataMapper_VS2010", "SqlDataMapper\SqlDataMapper_VS2010.csproj", "{17647789-C475-4B42-9227-AB04EBE73BF5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlDataMapper", "SqlDataMapper\SqlDataMapper.csproj", "{17647789-C475-4B42-9227-AB04EBE73BF5}"
 EndProject
 Project("{E09DD79A-4488-4AB9-8D3F-A7EEE78BF432}") = "Package", "Package\Package.nuproj", "{5C23C53D-A550-4C6A-A55D-82D96F32E077}"
 	ProjectSection(ProjectDependencies) = postProject
