@@ -166,7 +166,7 @@ namespace SqlDataMapper
 					closeConnection = true;
 				}
 
-				return Provider.SelectObjectList<TDestination>(query.Check(this.ParameterCheck).QueryString);
+				return Provider.SelectObjectList<TDestination>(query.Check(this.ParameterCheck).QueryString).ToArray();
 			}
 			catch (Exception ex)
 			{
@@ -230,7 +230,7 @@ namespace SqlDataMapper
 					closeConnection = true;
 				}
 
-				return Provider.SelectScalarList<TDestination>(query.Check(this.ParameterCheck).QueryString);
+				return Provider.SelectScalarList<TDestination>(query.Check(this.ParameterCheck).QueryString).ToArray();
 			}
 			catch (Exception ex)
 			{
