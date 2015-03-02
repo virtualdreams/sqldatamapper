@@ -6,67 +6,67 @@ using System.Text;
 namespace SqlDataMapper
 {
 	/// <summary>
-	/// Generic interface for sql provider
+	/// Interface for sql provider
 	/// </summary>
 	public interface ISqlProvider
 	{
 		/// <summary>
-		/// Must provide open functionality
+		/// Provide open functionality
 		/// </summary>
 		void Open();
 		
 		/// <summary>
-		/// Must provide close functionality
+		/// Provide close functionality
 		/// </summary>
 		void Close();
 		
 		/// <summary>
-		/// Must provide begin transaction functionality
+		/// Provide begin transaction functionality
 		/// </summary>
 		void BeginTransaction();
 		
 		/// <summary>
-		/// Must provide commit transaction functionality
+		/// Provide commit transaction functionality
 		/// </summary>
 		void CommitTransaction();
 		
 		/// <summary>
-		/// Must provide rollback transaction functionality
+		/// Provide rollback transaction functionality
 		/// </summary>
 		void RollbackTransaction();
 		
 		/// <summary>
-		/// Must provide select object functionality
+		/// Provide select object functionality
 		/// </summary>
-		T Select<T>(string query) where T : class, new();
+		T SelectObject<T>(string query) where T : class, new();
 		
 		/// <summary>
-		/// Must provide select list functionality
+		/// Provide select list functionality
 		/// </summary>
-		IEnumerable<T> SelectList<T>(string query) where T : class, new();
+		IEnumerable<T> SelectObjectList<T>(string query) where T : class, new();
 		
 		/// <summary>
-		/// Must provide select scalar functionality
+		/// Provide select scalar functionality
 		/// </summary>
 		T SelectScalar<T>(string query) where T : IConvertible;
 
 		/// <summary>
-		/// Must provide select list functionality, implemented as scalar list.
+		/// Provide select list functionality, implemented as scalar list.
 		/// </summary>
 		IEnumerable<T> SelectScalarList<T>(string query) where T : IConvertible;
 		
 		/// <summary>
-		/// Must provide insert functionality
+		/// Provide insert functionality
 		/// </summary>
 		int Insert(string query);
 		
 		/// <summary>
-		/// Must provide update functionality
+		/// Provide update functionality
 		/// </summary>
 		int Update(string query);
 		
 		/// <summary>
-		/// Must provide delete functionality
+		/// Provide delete functionality
 		/// </summary>
 		int Delete(string query);
 	}

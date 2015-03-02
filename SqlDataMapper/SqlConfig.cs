@@ -418,7 +418,8 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("connectionString");
 
 			Provider provider = GetProvider(id);
-			return new SqlContext(provider.assemblyName, provider.connectionClass, connectionString);
+
+			return new SqlContext(new SqlProvider(provider.assemblyName, provider.connectionClass, connectionString));
 		}
 		
 		#endregion

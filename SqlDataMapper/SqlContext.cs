@@ -8,32 +8,11 @@ namespace SqlDataMapper
 	/// <summary>
 	/// The sql context
 	/// </summary>
-	public class SqlContext
+	public class SqlContext: ISqlContext
 	{
 		private ISqlProvider Provider { get; set; }
 		private bool IsTransactionSession { get; set; }
 		private bool ParameterCheck { get; set; }
-		
-		#region Constructors
-		/// <summary>
-		/// Create a new context.
-		/// </summary>
-		/// <param name="assemblyName"></param>
-		/// <param name="connectionClass"></param>
-		/// <param name="connectionString"></param>
-		public SqlContext(string assemblyName, string connectionClass, string connectionString)
-		{
-			if (String.IsNullOrEmpty(assemblyName))
-				throw new ArgumentNullException("assemblyName");
-
-			if (String.IsNullOrEmpty(connectionClass))
-				throw new ArgumentNullException("connectionClass");
-
-			if (String.IsNullOrEmpty(connectionString))
-				throw new ArgumentNullException("connectionString");
-			
-			Provider = new SqlProvider(assemblyName, connectionClass, connectionString);
-		}
 		
 		/// <summary>
 		/// Create a new context out of a custom provider
@@ -46,9 +25,6 @@ namespace SqlDataMapper
 			
 			Provider = provider;
 		}
-		#endregion
-
-		#region sql methods
 
 		/// <summary>
 		/// Begins a database transaction.
@@ -142,23 +118,23 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Executes a sql select statement that returns data to populate a single object instance.
+		/// Executes a sql select statement that returns a single data object.
 		/// </summary>
-		/// <typeparam name="TDestination">The object type</typeparam>
-		/// <param name="query">The query object</param>
-		/// <returns>A single object</returns>
+		/// <typeparam name="TDestination">The destination type.</typeparam>
+		/// <param name="query">The query.</param>
+		/// <returns>The data object.</returns>
 		public TDestination QueryForObject<TDestination>(ISqlQuery query) where TDestination : class, new()
 		{
-			bool flag = false;
+			bool closeConnection = false;
 			try
 			{
 				if (!IsTransactionSession)
 				{
 					Provider.Open();
-					flag = true;
+					closeConnection = true;
 				}
 
-				return Provider.Select<TDestination>(query.Check(this.ParameterCheck).QueryString);
+				return Provider.SelectObject<TDestination>(query.Check(this.ParameterCheck).QueryString);
 			}
 			catch (Exception ex)
 			{
@@ -166,7 +142,7 @@ namespace SqlDataMapper
 			}
 			finally
 			{
-				if (flag)
+				if (closeConnection)
 				{
 					Provider.Close();
 				}
@@ -174,23 +150,23 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Executes a sql select statement that returns data to populate a number of result objects.
+		/// Executes a sql select statement that returns a list of data objects.
 		/// </summary>
-		/// <typeparam name="TDestination">The object type</typeparam>
-		/// <param name="query">The query object</param>
-		/// <returns>A list ob objects</returns>
-		public IEnumerable<TDestination> QueryForList<TDestination>(ISqlQuery query) where TDestination : class, new()
+		/// <typeparam name="TDestination">The destination type.</typeparam>
+		/// <param name="query">The query.</param>
+		/// <returns>The list of data objects</returns>
+		public IEnumerable<TDestination> QueryForObjectList<TDestination>(ISqlQuery query) where TDestination : class, new()
 		{
-			bool flag = false;
+			bool closeConnection = false;
 			try
 			{
 				if (!IsTransactionSession)
 				{
 					Provider.Open();
-					flag = true;
+					closeConnection = true;
 				}
 
-				return Provider.SelectList<TDestination>(query.Check(this.ParameterCheck).QueryString);
+				return Provider.SelectObjectList<TDestination>(query.Check(this.ParameterCheck).QueryString);
 			}
 			catch (Exception ex)
 			{
@@ -198,7 +174,7 @@ namespace SqlDataMapper
 			}
 			finally
 			{
-				if (flag)
+				if (closeConnection)
 				{
 					Provider.Close();
 				}
@@ -208,18 +184,18 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Executes a sql select statement that returns a single value.
 		/// </summary>
-		/// <typeparam name="TDestination">The object</typeparam>
-		/// <param name="query">The query object</param>
-		/// <returns>A single object</returns>
+		/// <typeparam name="TDestination">The destination type.</typeparam>
+		/// <param name="query">The query.</param>
+		/// <returns>The value.</returns>
 		public TDestination QueryForScalar<TDestination>(ISqlQuery query) where TDestination : IConvertible
 		{
-			bool flag = false;
+			bool closeConnection = false;
 			try
 			{
 				if (!IsTransactionSession)
 				{
 					Provider.Open();
-					flag = true;
+					closeConnection = true;
 				}
 
 				return Provider.SelectScalar<TDestination>(query.Check(this.ParameterCheck).QueryString);
@@ -230,7 +206,7 @@ namespace SqlDataMapper
 			}
 			finally
 			{
-				if (flag)
+				if (closeConnection)
 				{
 					Provider.Close();
 				}
@@ -240,18 +216,18 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Executes a sql statement that returns a list of single values.
 		/// </summary>
-		/// <typeparam name="TDestination">The object</typeparam>
-		/// <param name="query">The query object</param>
-		/// <returns>A list of single objects</returns>
+		/// <typeparam name="TDestination">The destination type.</typeparam>
+		/// <param name="query">The query.</param>
+		/// <returns>A list of values.</returns>
 		public IEnumerable<TDestination> QueryForScalarList<TDestination>(ISqlQuery query) where TDestination : IConvertible
 		{
-			bool flag = false;
+			bool closeConnection = false;
 			try
 			{
 				if (!IsTransactionSession)
 				{
 					Provider.Open();
-					flag = true;
+					closeConnection = true;
 				}
 
 				return Provider.SelectScalarList<TDestination>(query.Check(this.ParameterCheck).QueryString);
@@ -262,7 +238,7 @@ namespace SqlDataMapper
 			}
 			finally
 			{
-				if (flag)
+				if (closeConnection)
 				{
 					Provider.Close();
 				}
@@ -272,7 +248,7 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Executes a sql insert statement.
 		/// </summary>
-		/// <param name="query">The query object</param>
+		/// <param name="query">The query.</param>
 		/// <returns>The affected rows</returns>
 		public int Insert(ISqlQuery query)
 		{
@@ -303,7 +279,7 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Executes a sql update statement.
 		/// </summary>
-		/// <param name="query">The query object</param>
+		/// <param name="query">The query.</param>
 		/// <returns>The affected rows</returns>
 		public int Update(ISqlQuery query)
 		{
@@ -334,7 +310,7 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Executes a sql delete statement.
 		/// </summary>
-		/// <param name="query">The query object</param>
+		/// <param name="query">The query.</param>
 		/// <returns>The affected rows</returns>
 		public int Delete(ISqlQuery query)
 		{
@@ -361,7 +337,5 @@ namespace SqlDataMapper
 				}
 			}
 		}
-
-		#endregion
 	}
 }

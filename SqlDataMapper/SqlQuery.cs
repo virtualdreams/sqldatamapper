@@ -20,7 +20,7 @@ namespace SqlDataMapper
 		/// <returns></returns>
 		public delegate object FormatHandler(object value);
 
-		private string _query;
+		private string Query { get; set; }
 
 		/// <summary>
 		/// Override the internal format handler.
@@ -34,11 +34,11 @@ namespace SqlDataMapper
 		{
 			get
 			{
-				return _query;
+				return Query;
 			}
 			private set
 			{
-				_query = value;
+				Query = value;
 			}
 		}
 		
@@ -86,11 +86,11 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Check for empty parameter names an return a list of them.
+		/// Check for empty parameter names and return a list of them.
 		/// </summary>
-		private IEnumerable<string> CheckForUnresolvedParameters()
+		public IEnumerable<string> GetUnresolvedParameters()
 		{
-			MatchCollection mc = Regex.Matches(this.QueryString, "#([a-zA-Z0-9_]+)?#", RegexOptions.Singleline);
+			MatchCollection mc = Regex.Matches(this.QueryString, "@([a-zA-Z0-9_]+)", RegexOptions.Singleline);
 			if (mc.Count > 0)
 			{
 				foreach (Match m in mc)
@@ -116,7 +116,7 @@ namespace SqlDataMapper
 		{
 			if(check)
 			{
-				string[] keys = CheckForUnresolvedParameters().ToArray();
+				var keys = GetUnresolvedParameters();
 				if (keys.Count() > 0)
 				{
 					StringBuilder sb = new StringBuilder();
@@ -130,30 +130,6 @@ namespace SqlDataMapper
 				}
 			}
 			return this;
-		}
-
-		/// <summary>
-		/// Get a SqlParameter object for unresolved parameters.
-		/// </summary>
-		public SqlParameter GetUnresolvedParameters()
-		{
-			return this.GetUnresolvedParameters("");
-		}
-
-		/// <summary>
-		/// Get a SqlParameter object for unresolved parameters.
-		/// </summary>
-		/// <param name="value">A custom value for each parameter</param>
-		public SqlParameter GetUnresolvedParameters(object value)
-		{
-			SqlParameter param = new SqlParameter();
-
-			foreach (string key in CheckForUnresolvedParameters())
-			{
-				param.Add(key, value);
-			}
-
-			return param;
 		}
 		
 		/// <summary>
@@ -190,7 +166,7 @@ namespace SqlDataMapper
 		#region Public methods
 		
 		/// <summary>
-		/// Convert the object to a parameter object and try to replace all named parameters
+		/// Convert the source object and try to replace all named parameters.
 		/// </summary>
 		/// <typeparam name="TSource">The object type</typeparam>
 		/// <param name="source">The object</param>
@@ -198,30 +174,31 @@ namespace SqlDataMapper
 		public SqlQuery SetParameter<TSource>(TSource source) where TSource: class, new()
 		{
 			if(source == null)
-				throw new ArgumentNullException("obj");
+				throw new ArgumentNullException("source");
 			
 			return SetParameter(SqlObject.GetAsParameter<TSource>(source));
 		}
 		
 		/// <summary>
-		/// Convert the parameter object and try to replace all named parameters
+		/// Convert the parameter object and try to replace all named parameters.
 		/// </summary>
 		/// <param name="parameters">A SqlParameter object</param>
 		/// <returns>This instance</returns>
 		public SqlQuery SetParameter(SqlParameter parameters)
 		{
-			if(parameters != null)
+			if (parameters == null)
+				throw new ArgumentException("parameters");
+			
+			foreach(DictionaryEntry entry in parameters)
 			{
-				foreach(DictionaryEntry entry in parameters)
-				{
-					QueryString = Replace((string)entry.Key, GetValue(entry.Value), true);
-				}
+				QueryString = Replace((string)entry.Key, GetValue(entry.Value), true);
 			}
+
 			return this;
 		}
 		
 		/// <summary>
-		/// Set a single named parameter. The value can be every type.
+		/// Set a single named parameter.
 		/// </summary>
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
@@ -232,11 +209,12 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 			
 			this.QueryString = Replace(name, GetValue(value));
+
 			return this;
 		}
 
 		/// <summary>
-		/// Set a single named parameter. The value can be every type.
+		/// Set a single named parameter.
 		/// </summary>
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
@@ -247,11 +225,12 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 
 			this.QueryString = Replace(name, GetValue(value));
+
 			return this;
 		}
 
 		/// <summary>
-		/// Set a single named parameter. The value must a string
+		/// Set a single named parameter.
 		/// </summary>
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
@@ -262,11 +241,12 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 
 			this.QueryString = Replace(name, GetValue(value));
+
 			return this;
 		}
 
 		/// <summary>
-		/// Set a single named parameter. The value must a integer
+		/// Set a single named parameter.
 		/// </summary>
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
@@ -277,11 +257,12 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 
 			this.QueryString = Replace(name, GetValue(value));
+
 			return this;
 		}
 
 		/// <summary>
-		/// Set a single named parameter. The value must a long
+		/// Set a single named parameter.
 		/// </summary>
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
@@ -292,11 +273,12 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 
 			this.QueryString = Replace(name, GetValue(value));
+
 			return this;
 		}
 
 		/// <summary>
-		/// Set a single named parameter. The value must a single
+		/// Set a single named parameter.
 		/// </summary>
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
@@ -307,11 +289,12 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 
 			this.QueryString = Replace(name, GetValue(value));
+
 			return this;
 		}
 
 		/// <summary>
-		/// Set a single named parameter. The value must a double
+		/// Set a single named parameter.
 		/// </summary>
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
@@ -322,11 +305,12 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 
 			this.QueryString = Replace(name, GetValue(value));
+
 			return this;
 		}
 
 		/// <summary>
-		/// Set a single named parameter. The value must a decimal
+		/// Set a single named parameter.
 		/// </summary>
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
@@ -337,11 +321,12 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 
 			this.QueryString = Replace(name, GetValue(value));
+
 			return this;
 		}
 
 		/// <summary>
-		/// Set a single named parameter. The value must a char
+		/// Set a single named parameter.
 		/// </summary>
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
@@ -352,11 +337,12 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 
 			this.QueryString = Replace(name, GetValue(value));
+
 			return this;
 		}
 		
 		/// <summary>
-		/// Set a single named parameter. The value must a DateTime
+		/// Set a single named parameter.
 		/// </summary>
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
@@ -367,11 +353,12 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 
 			this.QueryString = Replace(name, GetValue(value));
+
 			return this;
 		}
 
 		/// <summary>
-		/// Set a single named parameter. The value must a Guid
+		/// Set a single named parameter.
 		/// </summary>
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
@@ -382,12 +369,13 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 
 			this.QueryString = Replace(name, GetValue(value));
+
 			return this;
 		}
 
 		
 		/// <summary>
-		/// Set a single named parameter. The value must a binary array.
+		/// Set a single named parameter.
 		/// </summary>
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
@@ -401,11 +389,12 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("value");
 
 			this.QueryString = Replace(name, GetValue(value));
+
 			return this;
 		}
 		
 		/// <summary>
-		/// Add sql query object an return a new instance.
+		/// Add sql query object and return a new instance.
 		/// </summary>
 		/// <param name="query">A sql object contains the query</param>
 		/// <returns>A new instance</returns>
@@ -418,7 +407,7 @@ namespace SqlDataMapper
 		}
 		
 		/// <summary>
-		/// Add sql query string an return a new instance.
+		/// Add sql query string and return a new instance.
 		/// </summary>
 		/// <param name="query">A query or a fragment of a query</param>
 		/// <returns>A new instance</returns>
@@ -474,7 +463,7 @@ namespace SqlDataMapper
 		/// </summary>
 		/// <param name="name">The parameter name.</param>
 		/// <param name="value">The value. Pass it before through GetValue()</param>
-		/// <param name="suppressException"></param>
+		/// <param name="suppressException">Suppress a exception if a paramater not found.</param>
 		/// <returns>The replaced sql query</returns>
 		private string Replace(string name, object value, bool suppressException)
 		{
@@ -482,7 +471,7 @@ namespace SqlDataMapper
 				throw new ArgumentNullException("name");
 
 			int matchCount = 0;
-			string newText = Regex.Replace(this.QueryString, String.Format("#{0}#", name), match =>
+			string newText = Regex.Replace(this.QueryString, String.Format("@{0}", name.Trim()), match =>
 			{
 				matchCount++;
 				return match.Result(String.Format(CultureInfo.InvariantCulture.NumberFormat, "{0}", value));
@@ -519,15 +508,15 @@ namespace SqlDataMapper
 		{
 			string tmp = query;
 
-			//remove coments
-			tmp = Regex.Replace(tmp, @"(--.*)$", " ", RegexOptions.Multiline);
-			tmp = Regex.Replace(tmp, @"(/\*.*?\*/)", " ", RegexOptions.Singleline);
+			//remove comments
+			//tmp = Regex.Replace(tmp, @"(--.*)$", " ", RegexOptions.Multiline);
+			//tmp = Regex.Replace(tmp, @"(/\*.*?\*/)", " ", RegexOptions.Singleline);
 
 			return tmp;
 		}
 
 		/// <summary>
-		/// Convert the the value to a sql type. Enumerables, exclude strings and byte-arrays, will transformed to comma separated line.
+		/// Convert the the value to a sql type. Enumerables, <remarks>excluding strings and byte-arrays</remarks>, will transformed to comma separated line.
 		/// </summary>
 		/// <param name="value">The value</param>
 		/// <returns>A sql compatible string</returns>
@@ -553,8 +542,8 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Format the value to compatible sql string.
 		/// </summary>
-		/// <param name="value">The value</param>
-		/// <returns>A sql compatible string</returns>
+		/// <param name="value">The value.</param>
+		/// <returns>A sql compatible string.</returns>
 		private object GetPrimitive(object value)
 		{
 			if (this.Handler != null)
@@ -572,7 +561,7 @@ namespace SqlDataMapper
 
 			if (value.GetType() == typeof(byte[]))
 			{
-				return ("0x" + BitConverter.ToString(value as byte[]).Replace("-", String.Empty));
+				return String.Format("0x{0}", BitConverter.ToString(value as byte[]).Replace("-", String.Empty));
 			}
 
 			if (value.GetType() == typeof(DateTime))
@@ -597,6 +586,7 @@ namespace SqlDataMapper
 
 			return value;
 		}
+
 		#endregion
 	}
 }

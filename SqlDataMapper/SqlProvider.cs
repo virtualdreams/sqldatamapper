@@ -8,32 +8,32 @@ using System.Data.Common;
 
 namespace SqlDataMapper
 {
-    /// <summary>
-    /// The default sql provider.
-    /// </summary>
-    public class SqlProvider: ISqlProvider
-    {
-        private DbConnection m_Connnection = null;
-        private DbTransaction m_Transaction = null;
-        
-        /// <summary>
-        /// Create a new sql connection class. The assembly would automatic loaded if possible.
-        /// </summary>
+	/// <summary>
+	/// The default sql provider.
+	/// </summary>
+	public class SqlProvider: ISqlProvider
+	{
+		private DbConnection Connection { get; set; }
+		private DbTransaction Transaction { get; set; }
+
+		/// <summary>
+		/// Create a new sql connection class. The assembly would automatic loaded if possible.
+		/// </summary>
 		/// <param name="assemblyName">The assembly name, i.e. <c>MySql.Data</c></param>
 		/// <param name="connectionClass">The connection class, i.e. <c>MySql.Data.MySqlClient.MySqlConnection</c></param>
 		/// <param name="connectionString">The connection string to the database, i.e. <c>Server=hostname;Database=dbname;Uid=user;Pwd=password;Pooling=true</c></param>
-        public SqlProvider(string assemblyName, string connectionClass, string connectionString)
-        {
+		public SqlProvider(string assemblyName, string connectionClass, string connectionString)
+		{
 			try
 			{
-				m_Connnection = (DbConnection)Activator.CreateInstance(assemblyName, connectionClass).Unwrap();
-				m_Connnection.ConnectionString = connectionString;
+				Connection = (DbConnection)Activator.CreateInstance(assemblyName, connectionClass).Unwrap();
+				Connection.ConnectionString = connectionString;
 			}
 			catch(Exception ex)
 			{
-				throw new Exception(String.Format("Can't create database object: {0}", ex.Message), ex);
+				throw new SqlDataMapperException(String.Format("Can't create database object: {0}", ex.Message), ex);
 			}
-        }
+		}
 		
 		/// <summary>
 		/// Opens a connection to the database
@@ -41,30 +41,30 @@ namespace SqlDataMapper
 		/// <remarks>
 		/// If a connection already exits, the connection was closed before.
 		/// </remarks>
-        public void Open()
-        {
-            Close();
-            try
-            {
-				m_Connnection.Open();
-            }
-            catch (Exception ex)
-            {
-                Close();
-				throw new Exception(String.Format("Can't open datenbase: {0}", ex.Message));
-            }
-        }
+		public void Open()
+		{
+			Close();
+			try
+			{
+				Connection.Open();
+			}
+			catch (Exception ex)
+			{
+				Close();
+				throw new SqlDataMapperException(String.Format("Can't open datenbase: {0}", ex.Message));
+			}
+		}
 
 		/// <summary>
 		/// Close the connection to the database
 		/// </summary>
-        public void Close()
-        {
-            if (m_Connnection != null)
-            {
-                m_Connnection.Close();
-            }
-        }
+		public void Close()
+		{
+			if (Connection != null && Connection.State == ConnectionState.Open)
+			{
+				Connection.Close();
+			}
+		}
 		
 		/// <summary>
 		/// Begins a database transaction
@@ -73,11 +73,11 @@ namespace SqlDataMapper
 		{
 			try
 			{
-				m_Transaction = m_Connnection.BeginTransaction();
+				Transaction = Connection.BeginTransaction();
 			}
 			catch (Exception ex)
 			{
-				m_Transaction = null;
+				Transaction = null;
 				throw ex;
 			}
 		}
@@ -87,11 +87,11 @@ namespace SqlDataMapper
 		/// </summary>
 		public void CommitTransaction()
 		{
-			if (m_Transaction != null)
+			if (Transaction != null)
 			{
-				m_Transaction.Commit();
-				m_Transaction.Dispose();
-				m_Transaction = null;
+				Transaction.Commit();
+				Transaction.Dispose();
+				Transaction = null;
 			}
 		}
 		
@@ -100,26 +100,26 @@ namespace SqlDataMapper
 		/// </summary>
 		public void RollbackTransaction()
 		{
-			if (m_Transaction != null)
+			if (Transaction != null)
 			{
-				m_Transaction.Rollback();
-				m_Transaction.Dispose();
-				m_Transaction = null;
+				Transaction.Rollback();
+				Transaction.Dispose();
+				Transaction = null;
 			}
 		}
-		
-        /// <summary>
-        /// Select a single object from the database.
-        /// </summary>
-		public T Select<T>(string query) where T : class, new()
+
+		/// <summary>
+		/// Select a single object from the database.
+		/// </summary>
+		public T SelectObject<T>(string query) where T : class, new()
 		{
-			using (DbCommand cmd = m_Connnection.CreateCommand())
+			using (DbCommand cmd = Connection.CreateCommand())
 			{
 				cmd.CommandText = query;
 
-				if (m_Transaction != null)
+				if (Transaction != null)
 				{
-					cmd.Transaction = m_Transaction;
+					cmd.Transaction = Transaction;
 				}
 
 				cmd.Prepare();
@@ -139,19 +139,19 @@ namespace SqlDataMapper
 				}
 			}
 		}
-        
-        /// <summary>
-        /// Selects a list of objects from the database.
-        /// </summary>
-		public IEnumerable<T> SelectList<T>(string query) where T : class, new()
+
+		/// <summary>
+		/// Selects a list of objects from the database.
+		/// </summary>
+		public IEnumerable<T> SelectObjectList<T>(string query) where T : class, new()
 		{
-			using (DbCommand cmd = m_Connnection.CreateCommand())
+			using (DbCommand cmd = Connection.CreateCommand())
 			{
 				cmd.CommandText = query;
 
-				if (m_Transaction != null)
+				if (Transaction != null)
 				{
-					cmd.Transaction = m_Transaction;
+					cmd.Transaction = Transaction;
 				}
 
 				cmd.Prepare();
@@ -165,19 +165,19 @@ namespace SqlDataMapper
 				}
 			}
 		}
-        
-        /// <summary>
-        /// Selects the first row and the first column in resultset.
-        /// </summary>
+
+		/// <summary>
+		/// Selects the first row and the first column in resultset.
+		/// </summary>
 		public T SelectScalar<T>(string query) where T : IConvertible
 		{
-			using (DbCommand cmd = m_Connnection.CreateCommand())
+			using (DbCommand cmd = Connection.CreateCommand())
 			{
 				cmd.CommandText = query;
 
-				if (m_Transaction != null)
+				if (Transaction != null)
 				{
-					cmd.Transaction = m_Transaction;
+					cmd.Transaction = Transaction;
 				}
 
 				cmd.Prepare();
@@ -196,7 +196,7 @@ namespace SqlDataMapper
 					}
 					catch (InvalidCastException ex)
 					{
-						throw new Exception(String.Format("Invalid cast. Type '{0}' required.", obj.GetType()), ex);
+						throw new SqlDataMapperException(String.Format("Invalid cast. Type '{0}' required.", obj.GetType()), ex);
 					}
 				}
 			}
@@ -207,13 +207,13 @@ namespace SqlDataMapper
 		/// </summary>
 		public IEnumerable<T> SelectScalarList<T>(string query) where T : IConvertible
 		{
-			using (DbCommand cmd = m_Connnection.CreateCommand())
+			using (DbCommand cmd = Connection.CreateCommand())
 			{
 				cmd.CommandText = query;
 
-				if (m_Transaction != null)
+				if (Transaction != null)
 				{
-					cmd.Transaction = m_Transaction;
+					cmd.Transaction = Transaction;
 				}
 
 				cmd.Prepare();
@@ -238,7 +238,7 @@ namespace SqlDataMapper
 							}
 							catch (InvalidCastException ex)
 							{
-								throw new Exception(String.Format("Invalid cast. Type '{0}' is required.", obj.GetType()), ex);
+								throw new SqlDataMapperException(String.Format("Invalid cast. Type '{0}' is required.", obj.GetType()), ex);
 							}
 						}
 					}
@@ -252,13 +252,13 @@ namespace SqlDataMapper
 		/// </summary>
 		public int Insert(string query)
 		{
-			using (DbCommand cmd = m_Connnection.CreateCommand())
+			using (DbCommand cmd = Connection.CreateCommand())
 			{
 				cmd.CommandText = query;
 
-				if (m_Transaction != null)
+				if (Transaction != null)
 				{
-					cmd.Transaction = m_Transaction;
+					cmd.Transaction = Transaction;
 				}
 
 				cmd.Prepare();
@@ -272,13 +272,13 @@ namespace SqlDataMapper
 		/// </summary>
 		public int Update(string query)
 		{
-			using (DbCommand cmd = m_Connnection.CreateCommand())
+			using (DbCommand cmd = Connection.CreateCommand())
 			{
 				cmd.CommandText = query;
 
-				if (m_Transaction != null)
+				if (Transaction != null)
 				{
-					cmd.Transaction = m_Transaction;
+					cmd.Transaction = Transaction;
 				}
 
 				cmd.Prepare();
@@ -292,13 +292,13 @@ namespace SqlDataMapper
 		/// </summary>
 		public int Delete(string query)
 		{
-			using (DbCommand cmd = m_Connnection.CreateCommand())
+			using (DbCommand cmd = Connection.CreateCommand())
 			{
 				cmd.CommandText = query;
 
-				if (m_Transaction != null)
+				if (Transaction != null)
 				{
-					cmd.Transaction = m_Transaction;
+					cmd.Transaction = Transaction;
 				}
 
 				cmd.Prepare();
