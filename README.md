@@ -6,6 +6,8 @@ Simple library to map sql result sets into C# classes. Can also map C# classes i
 Usage
 -----
 
+Sample code to work with the library.
+
 	use SqlDataMapper;
 	
 	namespace Demo
@@ -36,15 +38,13 @@ Config
 Create a file named *SqlMapperConfig.xml* with the following content:
 
 	<?xml version="1.0" encoding="utf-8" ?>
-	<sqlMapConfig>
+	<configuration>
 		<providers file="./providers.xml" />
 		<database provider="mysql" connectionString="Server=hostname;Database=database;Uid=username;Pwd=password;Pooling=true" />
-		<sqlMaps>
-			<sqlMap file="./sql.xml" />
-		</sqlMaps>
-	</sqlMapConfig>
-
-This is the configuration for zeroconf.
+		<statements>
+			<include file="./sql.xml" />
+		</statements>
+	</configuration>
 
 Create also a file named *providers.xml* with the following content:
 
@@ -77,30 +77,47 @@ This file contains the assembly names and the class names to initiate the connec
 The last file can named with every name, i.e.: *sql.xml*. Some sample content:
 
 	<?xml version="1.0" encoding="UTF-8"?>
-	<sqlMap>
-		<select id="getSome">
+	<statements>
+		<statement id="getAllItems">
 			<![CDATA[
-			<your select statemnent here>
+			select
+				*
+			from
+				table
 			]]>
-		</select>
-		<insert id="insertSome">
+		</statement>
+		<statement id="getItem">
 			<![CDATA[
-			<your insert statemnent here>
+			select
+				*
+			from
+				table
+			where
+				id = @id
 			]]>
-		</insert>
-		<update id="updateSome">
+		</statement>
+		<statement id="updateItem">
 			<![CDATA[
-			<your update statemnent here>
+			update
+				table
+			set
+				name = @name
+			where
+				id = @id
 			]]>	
-		</update>
-		<delete id="deleteSome">
+		</statement>
+		<statement id="deleteItem">
 			<![CDATA[
-			<your delete statemnent here>
+			delete from
+				table
+			where
+				id = @id
 			]]>	
-		</delete>
-		<part id="partSome">
+		</statement>
+		<statement id="partSome">
 			<![CDATA[
-			<your part statemnent here>
+			and name like @term
+			and number like @term
 			]]>	
-		</part>
-	</sqlMap>
+		</statement>
+	</statements>
