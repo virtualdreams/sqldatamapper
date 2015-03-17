@@ -10,6 +10,11 @@
 		assemblyName="System.Data, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 		connectionClass="System.Data.SqlClient.SqlConnection"
 	/>
+	<provider
+		id="mssql4.0"
+		assemblyName="System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+		connectionClass="System.Data.SqlClient.SqlConnection"
+	/>
 	<provider 
 		id="oracle" 
 		assemblyName="Devart.Data.Oracle" 

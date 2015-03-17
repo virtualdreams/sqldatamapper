@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<sqlMapConfig>
+<configuration>
 	<providers file="providers.xml" />
 	<database provider="mysql" connectionString="Data Source=sqlite.db;Version=3;Pooling=true" />
-	<sqlMaps>
-		<sqlMap file="~/mappings/demo.xml" />
-		<sqlMap file="~/mappings/mysqltest.xml" />
-	</sqlMaps>
-</sqlMapConfig>
+	<statements>
+		<include file="~/demo1.xml" />
+		<include file="~/demo2.xml" />
+	</statements>
+</configuration>

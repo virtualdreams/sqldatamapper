@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<statements>
+    <statement id="getAllItems">
+        <![CDATA[
+        select
+            *
+        from
+            table
+        ]]>
+    </statement>
+    <statement id="getItem">
+        <![CDATA[
+        select
+            *
+        from
+            table
+        where
+            id = @id
+        ]]>
+    </statement>
+    <statement id="updateItem">
+        <![CDATA[
+        update
+            table
+        set
+            name = @name
+        where
+            id = @id
+        ]]> 
+    </statement>
+    <statement id="deleteItem">
+        <![CDATA[
+        delete from
+            table
+        where
+            id = @id
+        ]]> 
+    </statement>
+    <statement id="partSome">
+        <![CDATA[
+        and name like @term
+        and number like @term
+        ]]> 
+    </statement>
+</statements>
