@@ -20,13 +20,8 @@ namespace SqlDataMapper
 	/// </summary>
 	public class SqlConfig
 	{
-		private HybridDictionary m_Statements = new HybridDictionary();
-		private HybridDictionary m_Providers = new HybridDictionary();
-
-		/// <summary>
-		/// Enable or disable xml validation.
-		/// </summary>
-		public bool ValidationCheck { get; set; }
+		private HybridDictionary _Statements = new HybridDictionary();
+		private HybridDictionary _Providers = new HybridDictionary();
 
 		/// <summary>
 		/// Get or set default provider id.
@@ -38,7 +33,6 @@ namespace SqlDataMapper
 		/// </summary>
 		public string DefaultConnectionString { get; set; }
 
-		#region Properties
 		/// <summary>
 		/// Product version
 		/// </summary>
@@ -52,9 +46,7 @@ namespace SqlDataMapper
 				return fvi.ProductVersion;
 			}
 		}
-		#endregion
-
-		#region Structures
+		
 		private struct Statement
 		{
 			public string statement;
@@ -65,313 +57,199 @@ namespace SqlDataMapper
 			public string assemblyName;
 			public string connectionClass;
 		};
-		#endregion
 		
-		#region Constructors
 		/// <summary>
-		/// Constructor for auto configuration (zeroconf).
-		/// Searchs for <c>SqlMapperConfig.xml</c> file, otherwise throws an exception.
+		/// Create an empty instance.
 		/// </summary>
 		public SqlConfig()
-            :this(false)
 		{ }
+		
+		/// <summary>
+		/// Create an instance and load configuration from file.
+		/// </summary>
+		/// <param name="filename">The configuration file.</param>
+		public SqlConfig(string filename)
+		{
+			new SqlXmlLoader(this).Configure(filename);
+		}
 
 		/// <summary>
-		/// Constructor for auto configuration (zeroconf).
-		/// Searchs for <c>SqlMapperConfig.xml</c> file, otherwise throws an exception.
-		/// If createEmpty is set to true, an empty instance was created.
+		/// Add a provider to configuration.
+		/// <example>assemblyName: MySql.Data</example>
+		/// <example>connectionClass: MySql.Data.MySqlClient.MySqlConnection</example>
 		/// </summary>
-		/// <param name="createEmpty">Initialzes an empty instance or zeroconf</param>
-		public SqlConfig(bool createEmpty)
+		/// <param name="id">The unique identifier for the provider.</param>
+		/// <param name="assemblyName">The assembly name.</param>
+		/// <param name="connectionClass">The connection class.</param>
+		public void AddProvider(string id, string assemblyName, string connectionClass)
 		{
-			if (createEmpty)
-				return;
+			if(String.IsNullOrEmpty(assemblyName))
+				throw new ArgumentNullException("assemblyName");
 
-			string file = ConvertToFullPath("SqlMapperConfig.xml");
+			if(String.IsNullOrEmpty(connectionClass))
+				throw new ArgumentNullException("connectionClass");
 
-			FileInfo fi = new FileInfo(file);
-			if (fi.Exists)
-			{
-				LoadConfiguration(fi.FullName);
-			}
-			else
-			{
-				throw new SqlDataMapperException("Can't find 'SqlMapperConfig.xml' for autoconfiguration.");
-			}
+			this.AddProvider(id, new Provider { assemblyName = assemblyName, connectionClass = connectionClass });
 		}
 		
 		/// <summary>
-		/// Constructor for auto configuration.
+		/// AAdd a provider to configuration.
 		/// </summary>
-		/// <param name="config">The configuration file</param>
-		public SqlConfig(string config)
+		/// <param name="id">The unique identifier for the provider.</param>
+		/// <param name="provider">The provider data.</param>
+		private void AddProvider(string id, Provider provider)
 		{
-			if(String.IsNullOrEmpty(config))
-				throw new ArgumentNullException("config");
-			
-			LoadConfiguration(config);
-		}
-		#endregion
+			if (String.IsNullOrEmpty(id))
+				throw new ArgumentNullException("id");
 
-		#region Configuration methods
-		/// <summary>
-		/// Load the configuration xml file.
-		/// </summary>
-		/// <param name="filename">The xml file contains the base configuration</param>
-		private void LoadConfiguration(string filename)
-		{
-			try
+			if (_Providers.Contains(id))
 			{
-				filename = ConvertToFullPath(filename);
-
-				XDocument doc = XDocument.Load(filename, LoadOptions.None);
-				
-				if(ValidationCheck)
-					ValidateXml(doc, "SqlDataMapper.configuration.xsd");
-
-				ReadConfiguration(doc);
+				throw new SqlDataMapperException(String.Format("The configuration already contains a provider named '{0}'.", id));
 			}
-			catch (Exception ex)
-			{
-				throw new SqlDataMapperException(String.Format("Load configuration file failed: '{0}' -> {1}", filename, ex.Message), ex);
-			}
-		}
-		
-		/// <summary>
-		/// Load the providers xml file.
-		/// </summary>
-		/// <param name="filename">The xml file contains the provider informations</param>
-		public void LoadProviders(string filename)
-		{
-			try
-			{
-				filename = ConvertToFullPath(filename);
-				
-				XDocument doc = XDocument.Load(filename, LoadOptions.None);
-
-				if (ValidationCheck)
-					ValidateXml(doc, "SqlDataMapper.provider.xsd");
-				
-				ReadProviders(doc);
-			}
-			catch(Exception ex)
-			{
-				throw new SqlDataMapperException(String.Format("Load providers file failed: '{0}' -> {1}", filename, ex.Message), ex);
-			}
+			this._Providers.Add(id, provider);
 		}
 
 		/// <summary>
-		/// Load the mappings xml file.
-		/// </summary>
-		/// <param name="filename">The xml file contains the statements</param>
-		public void LoadQueries(string filename)
-		{
-			try
-			{
-				filename = ConvertToFullPath(filename);
-
-				XDocument doc = XDocument.Load(filename, LoadOptions.None);
-
-				if (ValidationCheck)
-					ValidateXml(doc, "SqlDataMapper.mapping.xsd");
-
-				LoadSelects(doc);
-				LoadInserts(doc);
-				LoadUpdates(doc);
-				LoadDeletes(doc);
-				LoadParts(doc);
-				LoadInclude(doc);
-			}
-			catch (Exception ex)
-			{
-				throw new SqlDataMapperException(String.Format("Load sql map failed: '{0}' -> {1}", filename, ex.Message), ex);
-			}
-		}
-		
-		/// <summary>
-		/// Read configuration file for auto config.
-		/// </summary>
-		/// <param name="doc">A xml document contains the base configuration</param>
-		private void ReadConfiguration(XDocument doc)
-		{
-			string providers = doc.Element("sqlMapConfig").Element("providers").Attribute("file").Value;
-			var database = doc.Element("sqlMapConfig").Element("database");
-			string providerName = database.Attribute("provider").Value;
-			string connectionString = database.Attribute("connectionString").Value;
-			
-			//Load providers
-			LoadProviders(providers);
-			
-			//Load sql queries
-			var maps = from map in doc.Element("sqlMapConfig").Element("sqlMaps").Elements("sqlMap")
-			select new
-			{
-				file = map.Attribute("file").Value
-			};
-
-			foreach (var map in maps)
-			{
-			    string file = map.file.Trim();
-
-			    LoadQueries(file);
-			}
-
-			DefaultProvider = providerName;
-			DefaultConnectionString = connectionString;
-		}
-		
-		/// <summary>
-		/// Read provider informations.
-		/// </summary>
-		/// <param name="doc">A xml document contains the provider informations</param>
-		private void ReadProviders(XDocument doc)
-		{
-			var providers = from provider in doc.Element("providers").Elements("provider")
-							select new
-							{
-								id = provider.Attribute("id").Value,
-								assemblyName = provider.Attribute("assemblyName").Value,
-								connectionClass = provider.Attribute("connectionClass").Value
-							};
-			
-			foreach(var provider in providers)
-			{
-				string id = provider.id.Trim();
-				string assemblyName = provider.assemblyName.Trim();
-				string connectionClass = provider.connectionClass.Trim();
-				
-				AddProvider(id, new Provider { assemblyName = assemblyName, connectionClass = connectionClass });
-			}
-		}
-		
-		/// <summary>
-		/// Validate the xml document.
-		/// Throws XmlSchemaException if fails
-		/// </summary>
-		/// <param name="doc">The xml document</param>
-		/// <param name="xsd">The xsd stream name</param>
-		private void ValidateXml(XDocument doc, string xsd)
-		{
-			if (String.IsNullOrEmpty(xsd))
-				throw new ArgumentNullException("xsd");
-
-			XmlSchemaSet schema = new XmlSchemaSet();
-			Stream xsdstream = Assembly.GetExecutingAssembly().GetManifestResourceStream(xsd);
-			if (xsdstream != null)
-			{
-				schema.Add(null, XmlReader.Create(xsdstream));
-			}
-			
-			doc.Validate(schema, (o, e) =>
-			{
-				throw new XmlSchemaException(e.Message);
-			});
-		}
-		
-		/// <summary>
-		/// Get the provider information for a given id.
+		/// Get provider data for id.
 		/// </summary>
 		/// <param name="id">The name of the provider.</param>
-		/// <returns>Returns the provider.</returns>
+		/// <returns></returns>
 		private Provider GetProvider(string id)
 		{
-			if(String.IsNullOrEmpty(id))
+			if (String.IsNullOrEmpty(id))
 				throw new ArgumentNullException("id");
-			
-			if(!m_Providers.Contains(id))
+
+			if (!_Providers.Contains(id))
 			{
-				throw new SqlDataMapperException(String.Format("This provider map does not contain a provider named '{0}'", id));
+				throw new SqlDataMapperException(String.Format("This configuration does not contain a provider named '{0}'.", id));
 			}
-			Provider provider = (Provider)m_Providers[id];
-			return provider;
+			return (Provider)_Providers[id];
 		}
 
 		/// <summary>
-		/// Get all provider ids from pool.
+		/// Get all registred provider id's.
 		/// </summary>
 		/// <returns></returns>
 		public IEnumerable<string> GetProviders()
 		{
-			foreach(string key in m_Providers.Keys)
+			foreach (string key in _Providers.Keys)
 			{
 				yield return key;
 			}
 		}
 
 		/// <summary>
-		/// Get the full path for the given filename.
+		/// Remove provider from configuration.
 		/// </summary>
-		/// <param name="filename">The filename as file, absolute filepath or relative filepath</param>
-		/// <returns>The full path</returns>
-		private string ConvertToFullPath(string filename)
+		/// <param name="id">The provider id.</param>
+		public void RemoveProvider(string id)
 		{
-			if (String.IsNullOrEmpty(filename))
-			{
-				throw new ArgumentNullException("filename");
-			}
+			if (String.IsNullOrEmpty(id))
+				throw new ArgumentNullException("id");
 
-			string tmp = "";
-			try
+			if (_Providers.Contains(id))
 			{
-				string applicationBaseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-				if (applicationBaseDirectory != null)
-				{
-					Uri uri = new Uri(applicationBaseDirectory);
-					if (uri.IsFile)
-					{
-						tmp = uri.LocalPath;
-					}
-				}
+				_Providers.Remove(id);
 			}
-			catch
-			{
-			}
-			if (!String.IsNullOrEmpty(tmp))
-			{
-				return Path.GetFullPath(Path.Combine(tmp, filename));
-			}
-			return Path.GetFullPath(filename);
 		}
-		#endregion
-		
-		#region Statement methods
 
 		/// <summary>
-		/// Get the named raw sql statement from the cache.
+		/// Remove all providers from configuration.
 		/// </summary>
-		/// <param name="id">The name of the sql statement</param>
-		/// <returns>Returns the raw statement.</returns>
+		public void ClearProviders()
+		{
+			_Providers.Clear();
+		}
+
+		/// <summary>
+		/// Add a statement to configuration.
+		/// </summary>
+		/// <param name="id">The unique identifier for the statement.</param>
+		/// <param name="statement">The statement.</param>
+		public void AddStatement(string id, string statement)
+		{
+			if(String.IsNullOrEmpty(statement))
+				throw new ArgumentNullException("statement");
+			
+			this.AddStatement(id, new Statement{ statement = statement });
+		}
+		
+		/// <summary>
+		/// Add a statement to configuration.
+		/// </summary>
+		/// <param name="id">The unique identifier for the statement</param>
+		/// <param name="statement">The statement.</param>
+		private void AddStatement(string id, Statement statement)
+		{
+			if(String.IsNullOrEmpty(id))
+				throw new ArgumentNullException("id");
+			
+			if(_Statements.Contains(id))
+			{
+				throw new SqlDataMapperException(String.Format("The configuration already contains a statement named '{0}'.", id));
+			}
+			this._Statements.Add(id, statement);
+		}
+
+		/// <summary>
+		/// Get the statement from configuration.
+		/// </summary>
+		/// <param name="id">The statement id.</param>
+		/// <returns></returns>
 		public string GetStatement(string id)
 		{
 			if(String.IsNullOrEmpty(id))
 				throw new ArgumentNullException("id");
 			
 			//get statement from pool
-			if (!m_Statements.Contains(id))
+			if (!_Statements.Contains(id))
 			{
-				throw new SqlDataMapperException(String.Format("This sql map does not contain a statement named '{0}'", id));
+				throw new SqlDataMapperException(String.Format("This configuration does not contain a statement named '{0}'", id));
 			}
-			Statement st = (Statement)m_Statements[id];
+			Statement st = (Statement)_Statements[id];
 			return st.statement;
 		}
 
 		/// <summary>
-		/// Get all statements ids from pool.
+		/// Get all registered statement id's.
 		/// </summary>
 		/// <returns></returns>
 		public IEnumerable<string> GetStatments()
 		{
-			foreach (string key in m_Statements.Keys)
+			foreach (string key in _Statements.Keys)
 			{
 				yield return key;
 			}
+		}
+
+		/// <summary>
+		/// Remove a statement from configuration.
+		/// </summary>
+		/// <param name="id">The statement id.</param>
+		public void RemoveStatement(string id)
+		{
+			if (String.IsNullOrEmpty(id))
+				throw new ArgumentNullException("id");
+
+			if (_Statements.Contains(id))
+			{
+				_Statements.Remove(id);
+			}
+		}
+
+		/// <summary>
+		/// Remove all statements from configuration.
+		/// </summary>
+		public void ClearStatements()
+		{
+			_Statements.Clear();
 		}
 		
 		/// <summary>
 		/// Create a new dynamic query out of the statement pool
 		/// </summary>
-		/// <param name="id">The named sql</param>
-		/// <returns>New SqlQuery object</returns>
+		/// <param name="id">The named sql.</param>
+		/// <returns></returns>
 		public SqlQuery CreateQuery(string id)
 		{
 			return new SqlQuery(GetStatement(id));
@@ -380,9 +258,9 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Create a new dynamic query out of the statement pool. This is for a custom query class
 		/// </summary>
-		/// <typeparam name="T">The object type of ISqlQuery</typeparam>
-		/// <param name="id">The named sql</param>
-		/// <returns>New ISqlQuery object</returns>
+		/// <typeparam name="T">The object type of ISqlQuery.</typeparam>
+		/// <param name="id">The named sql.</param>
+		/// <returns></returns>
 		public T CreateQuery<T>(string id) where T: ISqlQuery, new()
 		{
 			T t = new T();
@@ -409,6 +287,7 @@ namespace SqlDataMapper
 		/// </summary>
 		/// <param name="id">A provider from configuration</param>
 		/// <param name="connectionString">Custom connection string</param>
+		/// <returns></returns>
 		public SqlContext CreateContext(string id, string connectionString)
 		{
 			if (String.IsNullOrEmpty(id))
@@ -421,210 +300,5 @@ namespace SqlDataMapper
 
 			return new SqlContext(new SqlProvider(provider.assemblyName, provider.connectionClass, connectionString));
 		}
-		
-		#endregion
-		
-		#region Internal methods
-
-		/// <summary>
-		/// Add a user defined statement to the statement pool.
-		/// </summary>
-		/// <param name="id">The unique identifier for the statement</param>
-		/// <param name="statement">The object contains the statement informations</param>
-		public void AddStatement(string id, string statement)
-		{
-			if(String.IsNullOrEmpty(statement))
-				throw new ArgumentNullException("statement");
-			
-			this.AddStatement(id, new Statement{ statement = statement });
-		}
-		
-		/// <summary>
-		/// Add a loaded statement to the statement pool.
-		/// </summary>
-		/// <param name="id">The unique identifier for the statement</param>
-		/// <param name="statement">The object contains the statement informations</param>
-		private void AddStatement(string id, Statement statement)
-		{
-			if(String.IsNullOrEmpty(id))
-				throw new ArgumentNullException("id");
-			
-			if(m_Statements.Contains(id))
-			{
-				throw new SqlDataMapperException(String.Format("The sql map already contains a statement named '{0}'", id));
-			}
-			this.m_Statements.Add(id, statement);
-		}
-
-		/// <summary>
-		/// Add a user defined provider to the provider pool.
-		/// assemblyName like: MySql.Data
-		/// connectionClass like: MySql.Data.MySqlClient.MySqlConnection
-		/// </summary>
-		/// <param name="id">The unique identifier for the provider</param>
-		/// <param name="assemblyName">The assembly name.</param>
-		/// <param name="connectionClass">The connection class.</param>
-		public void AddProvider(string id, string assemblyName, string connectionClass)
-		{
-			if(String.IsNullOrEmpty(assemblyName))
-				throw new ArgumentNullException("assemblyName");
-
-			if(String.IsNullOrEmpty(connectionClass))
-				throw new ArgumentNullException("connectionClass");
-
-			this.AddProvider(id, new Provider { assemblyName = assemblyName, connectionClass = connectionClass });
-		}
-		
-		/// <summary>
-		/// Add a loaded provider to the provider pool.
-		/// </summary>
-		/// <param name="id">The unique identifier for the provider</param>
-		/// <param name="provider">The object contains the provider informations</param>
-		private void AddProvider(string id, Provider provider)
-		{
-			if (String.IsNullOrEmpty(id))
-				throw new ArgumentNullException("id");
-
-			if (m_Providers.Contains(id))
-			{
-				throw new SqlDataMapperException(String.Format("The provider pool already contains a provider named '{0}'", id));
-			}
-			this.m_Providers.Add(id, provider);
-		}
-		
-		/// <summary>
-		/// Load all select statements out of the given xml file.
-		/// </summary>
-		/// <param name="doc">The document that contains the statements</param>
-		private void LoadSelects(XDocument doc)
-		{
-			//get all select statements
-			var selects = from query in doc.Element("sqlMap").Elements("select")
-							select new 
-							{
-								id = query.Attribute("id").Value,
-								value = query.Value
-							};
-						  
-			foreach(var select in selects)
-			{
-				string id = select.id.Trim();
-				string value = select.value.Trim();
-				
-				AddStatement(id, new Statement { statement = value });
-			}
-		}
-		
-		/// <summary>
-		/// Load all insert statements out of the given xml file.
-		/// </summary>
-		/// <param name="doc">The document that contains the statements</param>
-		private void LoadInserts(XDocument doc)
-		{
-			//get all insert statements		
-			var inserts = from query in doc.Element("sqlMap").Elements("insert")
-			select new 
-			{
-				id = query.Attribute("id").Value,
-				value = query.Value
-			};
-						  
-			foreach(var select in inserts)
-			{
-				string id = select.id.Trim();
-				string value = select.value.Trim();
-
-				AddStatement(id, new Statement { statement = value });
-			}
-		}
-		
-		/// <summary>
-		/// Load all update statements out of the given xml file.
-		/// </summary>
-		/// <param name="doc">The document that contains the statements</param>
-		private void LoadUpdates(XDocument doc)
-		{
-			//get all update statements				
-			var updates = from query in doc.Element("sqlMap").Elements("update")
-			select new 
-			{
-				id = query.Attribute("id").Value,
-				value = query.Value
-			};
-						  
-			foreach(var select in updates)
-			{
-				string id = select.id.Trim();
-				string value = select.value.Trim();
-
-				AddStatement(id, new Statement { statement = value });
-			}
-		}
-		
-		/// <summary>
-		/// Load all delete statements out of the given xml file.
-		/// </summary>
-		/// <param name="doc">The document that contains the statements</param>
-		private void LoadDeletes(XDocument doc)
-		{
-			//get all delete statements
-			var deletes = from query in doc.Element("sqlMap").Elements("delete")
-			select new 
-			{
-				id = query.Attribute("id").Value,
-				value = query.Value
-			};
-						  
-			foreach(var select in deletes)
-			{
-				string id = select.id.Trim();
-				string value = select.value.Trim();
-
-				AddStatement(id, new Statement { statement = value });
-			}
-		}
-
-		/// <summary>
-		/// Load all fragment statements out of the given xml file.
-		/// </summary>
-		/// <param name="doc">The document that contains the statements</param>
-		private void LoadParts(XDocument doc)
-		{
-			//get all delete statements
-			var parts = from query in doc.Element("sqlMap").Elements("part")
-			select new
-			{
-				id = query.Attribute("id").Value,
-				value = query.Value
-			};
-
-			foreach (var select in parts)
-			{
-				string id = select.id.Trim();
-				string value = select.value.Trim();
-
-				AddStatement(id, new Statement { statement = value });
-			}
-		}
-		
-		/// <summary>
-		/// Load included documents.
-		/// </summary>
-		/// <param name="doc">The document that contains the statements</param>
-		private void LoadInclude(XDocument doc)
-		{
-			var include = from query in doc.Element("sqlMap").Elements("include")
-			select new
-			{
-				file = query.Attribute("file").Value
-			};
-							
-			foreach(var select in include)
-			{
-				string file = select.file.Trim();
-				LoadQueries(file);
-			}
-		}
-		#endregion
 	}
 }

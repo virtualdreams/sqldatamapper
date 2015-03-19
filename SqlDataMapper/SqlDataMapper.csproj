@@ -54,17 +54,24 @@
     <Compile Include="SqlParameter.cs" />
     <Compile Include="SqlProvider.cs" />
     <Compile Include="SqlQuery.cs" />
+    <Compile Include="SqlExtension.cs" />
+    <Compile Include="SqlXmlLoader.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="configuration.xsd">
+    <EmbeddedResource Include="Schemas\configuration.xsd">
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="mapping.xsd">
+    <EmbeddedResource Include="Schemas\provider.xsd">
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="provider.xsd">
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Schemas\statements.xsd">
       <SubType>Designer</SubType>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Samples\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
