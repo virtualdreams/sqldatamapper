@@ -14,9 +14,18 @@
 						<xs:attribute name="connectionString" type="xs:string" use="required" />
 					</xs:complexType>
 				</xs:element>
-				<xs:element minOccurs="1" maxOccurs="1" name="statements">
+				<xs:element minOccurs="0" maxOccurs="1" name="statements">
 					<xs:complexType>
-						<xs:sequence>
+						<xs:sequence minOccurs="0" maxOccurs="unbounded">
+							<xs:element minOccurs="0" maxOccurs="unbounded" name="statement">
+								<xs:complexType>
+									<xs:simpleContent>
+										<xs:extension base="xs:string">
+											<xs:attribute name="id" type="xs:string" use="required" />
+										</xs:extension>
+									</xs:simpleContent>
+								</xs:complexType>
+							</xs:element>
 							<xs:element minOccurs="0" maxOccurs="unbounded" name="include">
 								<xs:complexType>
 									<xs:attribute name="file" type="xs:string" use="required" />

@@ -54,20 +54,36 @@ namespace SqlDataMapper
 			var database = document.Element("configuration").Element("connection");
 			string providerName = database.Attribute("provider").Value;
 			string connectionString = database.Attribute("connectionString").Value;
+			var statementsNode = document.Element("configuration").Element("statements");
 
 			// read providers
 			LoadProvider(providerFilename);
 
-			// load includes
-			var includes = from node in document.Root.Element("statements").Elements("include")
-						   select new
-						   {
-							   File = node.Attribute("file").Value.ToString()
-						   };
-
-			foreach (var include in includes)
+			if (statementsNode != null)
 			{
-				LoadStatements(include.File.Trim());
+				var statements = from node in statementsNode.Elements("statement")
+								 select new
+								 {
+									 Id = node.Attribute("id").Value.ToString(),
+									 Content = node.Value
+								 };
+
+				// load includes
+				var includes = from node in statementsNode.Elements("include")
+							   select new
+							   {
+								   File = node.Attribute("file").Value.ToString()
+							   };
+
+				foreach (var statement in statements)
+				{
+					Config.AddStatement(statement.Id.Trim(), statement.Content.Trim());
+				}
+
+				foreach (var include in includes)
+				{
+					LoadStatements(include.File.Trim());
+				}
 			}
 
 			// assign default provider and connection string
