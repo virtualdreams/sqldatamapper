@@ -39,10 +39,18 @@ Create a file named *SqlMapperConfig.xml* with the following content:
 
 	<?xml version="1.0" encoding="utf-8" ?>
 	<configuration>
-		<providers file="./providers.xml" />
-		<database provider="mysql" connectionString="Server=hostname;Database=database;Uid=username;Pwd=password;Pooling=true" />
+		<provider file="./providers.xml" />
+		<connection provider="mysql" connectionString="Server=hostname;Database=database;Uid=username;Pwd=password;Pooling=true" />
 		<statements>
 			<include file="./sql.xml" />
+			<statement id="someOtherId">
+				<![CDATA[
+				select
+					*
+				from
+					table
+				]]>
+			</statement>
 		</statements>
 	</configuration>
 
