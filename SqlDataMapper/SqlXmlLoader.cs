@@ -57,7 +57,7 @@ namespace SqlDataMapper
 			var statementsNode = document.Element("configuration").Element("statements");
 
 			// read providers
-			LoadProvider(providerFilename);
+			AddProviders(providerFilename);
 
 			// read statements and includes if node available
 			if (statementsNode != null)
@@ -74,7 +74,7 @@ namespace SqlDataMapper
 		/// Load providers from file.
 		/// </summary>
 		/// <param name="filename">The filename.</param>
-		public void LoadProvider(string filename)
+		public void AddProviders(string filename)
 		{
 			if (String.IsNullOrEmpty(filename))
 				throw new ArgumentNullException("filename");
@@ -112,7 +112,7 @@ namespace SqlDataMapper
 		/// Load statements from file.
 		/// </summary>
 		/// <param name="filename">The filename.</param>
-		public void LoadStatements(string filename)
+		public void AddStatements(string filename)
 		{
 			if (String.IsNullOrEmpty(filename))
 				throw new ArgumentNullException("filename");
@@ -152,7 +152,7 @@ namespace SqlDataMapper
 
 			foreach (var include in includes)
 			{
-				LoadStatements(include.File.Trim());
+				AddStatements(include.File.Trim());
 			}
 		}
 	}

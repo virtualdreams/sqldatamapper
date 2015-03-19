@@ -30,9 +30,9 @@ namespace SqlDataMapper.Extension
 		/// </summary>
 		/// <param name="config">The config object.</param>
 		/// <param name="filename">The filename.</param>
-		public static void LoadProvider(this SqlConfig config, string filename)
+		public static void AddProviders(this SqlConfig config, string filename)
 		{
-			new SqlXmlLoader(config).LoadProvider(filename);
+			new SqlXmlLoader(config).AddProviders(filename);
 		}
 
 		/// <summary>
@@ -40,9 +40,9 @@ namespace SqlDataMapper.Extension
 		/// </summary>
 		/// <param name="config">The config object.</param>
 		/// <param name="filename">The filename.</param>
-		public static void LoadStatements(this SqlConfig config, string filename)
+		public static void AddStatements(this SqlConfig config, string filename)
 		{
-			new SqlXmlLoader(config).LoadStatements(filename);
+			new SqlXmlLoader(config).AddStatements(filename);
 		}
 	}
 
