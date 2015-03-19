@@ -59,31 +59,10 @@ namespace SqlDataMapper
 			// read providers
 			LoadProvider(providerFilename);
 
+			// read statements and includes if node available
 			if (statementsNode != null)
 			{
-				var statements = from node in statementsNode.Elements("statement")
-								 select new
-								 {
-									 Id = node.Attribute("id").Value.ToString(),
-									 Content = node.Value
-								 };
-
-				// load includes
-				var includes = from node in statementsNode.Elements("include")
-							   select new
-							   {
-								   File = node.Attribute("file").Value.ToString()
-							   };
-
-				foreach (var statement in statements)
-				{
-					Config.AddStatement(statement.Id.Trim(), statement.Content.Trim());
-				}
-
-				foreach (var include in includes)
-				{
-					LoadStatements(include.File.Trim());
-				}
+				ReadStatements(statementsNode);
 			}
 
 			// assign default provider and connection string
