@@ -163,8 +163,6 @@ namespace SqlDataMapper
 			return CreateQuery(query.QueryString);
 		}
 		
-		#region Public methods
-		
 		/// <summary>
 		/// Convert the source object and try to replace all named parameters.
 		/// </summary>
@@ -219,10 +217,13 @@ namespace SqlDataMapper
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
 		/// <returns>The instance</returns>
-		public SqlQuery SetParameter<TSource>(string name, TSource value) where TSource : IConvertible
+		public SqlQuery SetParameter<TSource>(string name, TSource value) // where TSource : IConvertible
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
+
+			if (value as IConvertible == null && value as IEnumerable == null)
+				throw new ArgumentException("value is neither a IConvertible or IEnumerable.");
 
 			this.QueryString = Replace(name, GetValue(value));
 
@@ -445,7 +446,6 @@ namespace SqlDataMapper
 			this.QueryString = Format(String.Format("{0} {1}", this.QueryString, query));
 			return this;
 		}
-		#endregion
 		
 		/// <summary>
 		/// Get the sql query
