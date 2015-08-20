@@ -37,7 +37,7 @@
 param
 (
 	[string]$file = '.\Properties\AssemblyInfo.cs',
-	[string]$git = "${env:ProgramFiles}\git\bin\git.exe"
+	[string]$git = "${env:ProgramW6432}\git\bin\git.exe"
 )
 
 ### test if the git executeable exists
