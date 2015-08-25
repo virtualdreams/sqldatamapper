@@ -9,6 +9,9 @@
 	version number are created from a tag if in form of 'v1.0-release...'.
 	Otherwise, the version numbers are extracted from file.
 	
+	Git 2.x for Windows (and the correct installed architecture) is required to work.
+	https://git-scm.com/download/win
+	
 	.PARAMETER file
 	
 	Path to 'AssemblyInfo.cs'
@@ -37,7 +40,7 @@
 param
 (
 	[string]$file = '.\Properties\AssemblyInfo.cs',
-	[string]$git = "${env:ProgramW6432}\git\bin\git.exe"
+	[string]$git = 'C:\Program Files\git\bin\git.exe'
 )
 
 ### test if the git executeable exists
