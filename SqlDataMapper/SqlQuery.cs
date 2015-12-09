@@ -9,24 +9,20 @@ using System.Globalization;
 namespace SqlDataMapper
 {
 	/// <summary>
-	/// The implementaton of the query object.
+	/// Class for a sql query.
 	/// </summary>
 	public class SqlQuery: ISqlQuery
 	{
 		/// <summary>
-		/// The format handler type to override the internal handler.
+		/// The query string.
 		/// </summary>
-		/// <param name="value"></param>
-		/// <returns></returns>
-		public delegate object FormatHandler(object value);
-
 		private string Query { get; set; }
 
 		/// <summary>
-		/// Override the internal format handler.
+		/// Default value formatter.
 		/// </summary>
-		public FormatHandler Handler { get; set; }
-		
+		private ISqlFormatter Formatter = new SqlFormatter();
+
 		/// <summary>
 		/// Get the query string
 		/// </summary>
@@ -34,7 +30,7 @@ namespace SqlDataMapper
 		{
 			get
 			{
-				return Query;
+				return Query.ToString();
 			}
 			private set
 			{
@@ -60,13 +56,13 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Create a new sql query.
 		/// </summary>
-		/// <param name="query">A sql query</param>
+		/// <param name="query">A sql query.</param>
 		public SqlQuery(string query)
 		{
 			if(query == null)
 				throw new ArgumentNullException("query");
 				
-			this.QueryString = Format(query);
+			this.QueryString = query;
 		}
 		
 		/// <summary>
@@ -78,7 +74,7 @@ namespace SqlDataMapper
 		}
 		
 		/// <summary>
-		/// Appends a sql query object
+		/// Appends a sql query object.
 		/// </summary>
 		static public SqlQuery operator +(SqlQuery query, ISqlQuery queryToAdd)
 		{
@@ -101,7 +97,7 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Check for empty parameter names an throws an exception if found any
+		/// Check for empty parameter names an throws an exception if found any.
 		/// </summary>
 		public ISqlQuery Check()
 		{
@@ -133,99 +129,99 @@ namespace SqlDataMapper
 		}
 		
 		/// <summary>
-		/// Replaces the whole existing query with the new query
+		/// Replaces the whole existing query string with the new query.
 		/// </summary>
-		/// <param name="query">The new query string</param>
-		/// <returns>This instance</returns>
+		/// <param name="query">The new query string.</param>
+		/// <returns>This instance.</returns>
 		public ISqlQuery Set(string query)
 		{
-			this.QueryString = Format(query);
+			if (String.IsNullOrEmpty(query))
+				throw new ArgumentNullException("query");
+
+			this.QueryString = query;
 			return this;
 		}
 		
 		/// <summary>
-		/// Create a new dynamic sql query
+		/// Create a new SqlQuery object.
 		/// </summary>
-		/// <param name="query">A query string</param>
-		/// <returns>A new instance</returns>
+		/// <param name="query">A query string.</param>
+		/// <returns>A new instance.</returns>
 		static public SqlQuery CreateQuery(string query)
 		{
 			return new SqlQuery(query);
 		}
 		
 		/// <summary>
-		/// Create a new dynamic sql query out of an other query
+		/// Create a new SqlQuery object.
 		/// </summary>
-		/// <param name="query">A query object</param>
-		/// <returns>A new instance</returns>
+		/// <param name="query">A query object.</param>
+		/// <returns>A new instance.</returns>
 		static public SqlQuery CreateQuery(ISqlQuery query)
 		{
 			return CreateQuery(query.QueryString);
 		}
 		
 		/// <summary>
-		/// Convert the source object and try to replace all named parameters.
-		/// </summary>
-		/// <typeparam name="TSource">The object type</typeparam>
-		/// <param name="source">The object</param>
-		/// <returns>This instance</returns>
-		public SqlQuery SetParameter<TSource>(TSource source) where TSource: class, new()
-		{
-			if(source == null)
-				throw new ArgumentNullException("source");
-			
-			return SetParameter(SqlObject.GetAsParameter<TSource>(source));
-		}
-		
-		/// <summary>
-		/// Convert the parameter object and try to replace all named parameters.
-		/// </summary>
-		/// <param name="parameters">A SqlParameter object</param>
-		/// <returns>This instance</returns>
-		public SqlQuery SetParameter(SqlParameter parameters)
-		{
-			if (parameters == null)
-				throw new ArgumentException("parameters");
-			
-			foreach(DictionaryEntry entry in parameters)
-			{
-				QueryString = Replace((string)entry.Key, GetValue(entry.Value), true);
-			}
-
-			return this;
-		}
-		
-		/// <summary>
 		/// Set a single named parameter.
 		/// </summary>
-		/// <param name="name">The named parameter</param>
-		/// <param name="value">The value</param>
-		/// <returns>The instance</returns>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <returns>This instance.</returns>
 		public SqlQuery SetParameter(string name, object value)
 		{
-			if(String.IsNullOrEmpty(name))
-				throw new ArgumentNullException("name");
-			
-			this.QueryString = Replace(name, GetValue(value));
-
-			return this;
+			return SetParameter(name, value, Formatter);
 		}
 
 		/// <summary>
 		/// Set a single named parameter.
 		/// </summary>
-		/// <param name="name">The named parameter</param>
-		/// <param name="value">The value</param>
-		/// <returns>The instance</returns>
-		public SqlQuery SetParameter<TSource>(string name, TSource value) // where TSource : IConvertible
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="formatter">The parameter formatter.</param>
+		/// <returns>This instance.</returns>
+		public SqlQuery SetParameter(string name, object value, ISqlFormatter formatter)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 
-			if (value as IConvertible == null && value as IEnumerable == null)
-				throw new ArgumentException("value is neither a IConvertible or IEnumerable.");
+			if (formatter == null)
+				throw new ArgumentNullException("formatter");
 
-			this.QueryString = Replace(name, GetValue(value));
+			this.QueryString = Replace(name, formatter.GetValue(value));
+
+			return this;
+		}
+
+		/// <summary>
+		/// Set a single named parameter.
+		/// </summary>
+		/// <typeparam name="TSource">The type of value.</typeparam>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <returns>The instance.</returns>
+		public SqlQuery SetParameter<TSource>(string name, TSource value)
+		{
+			return SetParameter<TSource>(name, value, Formatter);
+		}
+
+		/// <summary>
+		/// Set a single named parameter.
+		/// </summary>
+		/// <typeparam name="TSource">The type of value.</typeparam>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="formatter">The value formatter.</param>
+		/// <returns>This instance.</returns>
+		public SqlQuery SetParameter<TSource>(string name, TSource value, ISqlFormatter formatter)
+		{
+			if (String.IsNullOrEmpty(name))
+				throw new ArgumentNullException("name");
+
+			if (formatter == null)
+				throw new ArgumentNullException("formatter");
+
+			this.QueryString = Replace(name, formatter.GetValue(value));
 
 			return this;
 		}
@@ -235,13 +231,28 @@ namespace SqlDataMapper
 		/// </summary>
 		/// <param name="name">The named parameter</param>
 		/// <param name="value">The value</param>
-		/// <returns>This instance</returns>
+		/// <returns>This instance.</returns>
 		public SqlQuery SetParameter(string name, string value)
 		{
+			return SetParameter(name, value, Formatter);
+		}
+
+		/// <summary>
+		/// Set a single named parameter.
+		/// </summary>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="formatter">The value formatter.</param>
+		/// <returns>This instance.</returns>
+		public SqlQuery SetParameter(string name, string value, ISqlFormatter formatter)
+		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 
-			this.QueryString = Replace(name, GetValue(value));
+			if (formatter == null)
+				throw new ArgumentNullException("formatter");
+
+			this.QueryString = Replace(name, formatter.GetValue(value));
 
 			return this;
 		}
@@ -249,15 +260,30 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Set a single named parameter.
 		/// </summary>
-		/// <param name="name">The named parameter</param>
-		/// <param name="value">The value</param>
-		/// <returns>This instance</returns>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <returns>This instance.</returns>
 		public SqlQuery SetParameter(string name, int value)
 		{
+			return SetParameter(name, value, Formatter);
+		}
+
+		/// <summary>
+		/// Set a single named parameter.
+		/// </summary>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="formatter">The value formatter.</param>
+		/// <returns>This instance.</returns>
+		public SqlQuery SetParameter(string name, int value, ISqlFormatter formatter)
+		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 
-			this.QueryString = Replace(name, GetValue(value));
+			if (formatter == null)
+				throw new ArgumentNullException("formatter");
+
+			this.QueryString = Replace(name, formatter.GetValue(value));
 
 			return this;
 		}
@@ -265,15 +291,30 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Set a single named parameter.
 		/// </summary>
-		/// <param name="name">The named parameter</param>
-		/// <param name="value">The value</param>
-		/// <returns>This instance</returns>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <returns>This instance.</returns>
 		public SqlQuery SetParameter(string name, long value)
 		{
+			return SetParameter(name, value, Formatter);
+		}
+
+		/// <summary>
+		/// Set a single named parameter.
+		/// </summary>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="formatter">The value formatter.</param>
+		/// <returns></returns>
+		public SqlQuery SetParameter(string name, long value, ISqlFormatter formatter)
+		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 
-			this.QueryString = Replace(name, GetValue(value));
+			if (formatter == null)
+				throw new ArgumentNullException("formatter");
+
+			this.QueryString = Replace(name, formatter.GetValue(value));
 
 			return this;
 		}
@@ -281,15 +322,30 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Set a single named parameter.
 		/// </summary>
-		/// <param name="name">The named parameter</param>
-		/// <param name="value">The value</param>
-		/// <returns>This instance</returns>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <returns>This instance.</returns>
 		public SqlQuery SetParameter(string name, float value)
 		{
+			return SetParameter(name, value, Formatter);
+		}
+
+		/// <summary>
+		/// Set a single named parameter.
+		/// </summary>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="formatter">The value formatter.</param>
+		/// <returns>This instance.</returns>
+		public SqlQuery SetParameter(string name, float value, ISqlFormatter formatter)
+		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 
-			this.QueryString = Replace(name, GetValue(value));
+			if (formatter == null)
+				throw new ArgumentNullException("formatter");
+
+			this.QueryString = Replace(name, formatter.GetValue(value));
 
 			return this;
 		}
@@ -297,15 +353,30 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Set a single named parameter.
 		/// </summary>
-		/// <param name="name">The named parameter</param>
-		/// <param name="value">The value</param>
-		/// <returns>This instance</returns>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <returns>This instance.</returns>
 		public SqlQuery SetParameter(string name, double value)
 		{
+			return SetParameter(name, value, Formatter);
+		}
+
+		/// <summary>
+		/// Set a single named parameter.
+		/// </summary>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="formatter">The value formatter.</param>
+		/// <returns>This instance.</returns>
+		public SqlQuery SetParameter(string name, double value, ISqlFormatter formatter)
+		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 
-			this.QueryString = Replace(name, GetValue(value));
+			if (formatter == null)
+				throw new ArgumentNullException("formatter");
+
+			this.QueryString = Replace(name, formatter.GetValue(value));
 
 			return this;
 		}
@@ -313,15 +384,30 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Set a single named parameter.
 		/// </summary>
-		/// <param name="name">The named parameter</param>
-		/// <param name="value">The value</param>
-		/// <returns>This instance</returns>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <returns>This instance.</returns>
 		public SqlQuery SetParameter(string name, decimal value)
 		{
+			return SetParameter(name, value, Formatter);
+		}
+
+		/// <summary>
+		/// Set a single named parameter.
+		/// </summary>
+		/// <param name="name">The named paramter.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="formatter">The value formatter.</param>
+		/// <returns>This instance.</returns>
+		public SqlQuery SetParameter(string name, decimal value, ISqlFormatter formatter)
+		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 
-			this.QueryString = Replace(name, GetValue(value));
+			if (formatter == null)
+				throw new ArgumentNullException("formatter");
+
+			this.QueryString = Replace(name, formatter.GetValue(value));
 
 			return this;
 		}
@@ -329,15 +415,30 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Set a single named parameter.
 		/// </summary>
-		/// <param name="name">The named parameter</param>
-		/// <param name="value">The value</param>
-		/// <returns>This instance</returns>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <returns>This instance.</returns>
 		public SqlQuery SetParameter(string name, char value)
 		{
+			return SetParameter(name, value, Formatter);
+		}
+
+		/// <summary>
+		/// Set a single named parameter.
+		/// </summary>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="formatter">The value formatter.</param>
+		/// <returns>This instance.</returns>
+		public SqlQuery SetParameter(string name, char value, ISqlFormatter formatter)
+		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 
-			this.QueryString = Replace(name, GetValue(value));
+			if (formatter == null)
+				throw new ArgumentNullException("formatter");
+
+			this.QueryString = Replace(name, formatter.GetValue(value));
 
 			return this;
 		}
@@ -345,15 +446,30 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Set a single named parameter.
 		/// </summary>
-		/// <param name="name">The named parameter</param>
-		/// <param name="value">The value</param>
-		/// <returns>This instance</returns>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <returns>This instance.</returns>
 		public SqlQuery SetParameter(string name, DateTime value)
 		{
+			return SetParameter(name, value, Formatter);
+		}
+
+		/// <summary>
+		/// Set a single named parameter.
+		/// </summary>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="formatter">The value formatter.</param>
+		/// <returns>This instance.</returns>
+		public SqlQuery SetParameter(string name, DateTime value, ISqlFormatter formatter)
+		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 
-			this.QueryString = Replace(name, GetValue(value));
+			if (formatter == null)
+				throw new ArgumentNullException("formatter");
+
+			this.QueryString = Replace(name, formatter.GetValue(value));
 
 			return this;
 		}
@@ -361,15 +477,30 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Set a single named parameter.
 		/// </summary>
-		/// <param name="name">The named parameter</param>
-		/// <param name="value">The value</param>
-		/// <returns>The instance</returns>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <returns>The instance.</returns>
 		public SqlQuery SetParameter(string name, Guid value)
+		{
+			return SetParameter(name, value, Formatter);
+		}
+
+		/// <summary>
+		/// Set a single named parameter.
+		/// </summary>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="formatter">The value formatter.</param>
+		/// <returns></returns>
+		public SqlQuery SetParameter(string name, Guid value, ISqlFormatter formatter)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 
-			this.QueryString = Replace(name, GetValue(value));
+			if (formatter == null)
+				throw new ArgumentNullException("formatter");
+
+			this.QueryString = Replace(name, formatter.GetValue(value));
 
 			return this;
 		}
@@ -378,18 +509,33 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Set a single named parameter.
 		/// </summary>
-		/// <param name="name">The named parameter</param>
-		/// <param name="value">The value</param>
-		/// <returns>This instance</returns>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <returns>This instance.</returns>
 		public SqlQuery SetParameter(string name, byte[] value)
+		{
+			return SetParameter(name, value, Formatter);
+		}
+
+		/// <summary>
+		/// Set a single named parameter.
+		/// </summary>
+		/// <param name="name">The named parameter.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="formatter">The value formatter.</param>
+		/// <returns>This instance.</returns>
+		public SqlQuery SetParameter(string name, byte[] value, ISqlFormatter formatter)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 
-			if (value == null)
-				throw new ArgumentNullException("value");
+			if (value == null || value.Length == 0)
+				throw new ArgumentException("The value can't be NULL or empty.");
 
-			this.QueryString = Replace(name, GetValue(value));
+			if (formatter == null)
+				throw new ArgumentNullException("formatter");
+
+			this.QueryString = Replace(name, formatter.GetValue(value));
 
 			return this;
 		}
@@ -397,7 +543,7 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Add sql query object and return a new instance.
 		/// </summary>
-		/// <param name="query">A sql object contains the query</param>
+		/// <param name="query">A sql object contains the query.</param>
 		/// <returns>A new instance</returns>
 		public SqlQuery Add(ISqlQuery query)
 		{
@@ -410,7 +556,7 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Add sql query string and return a new instance.
 		/// </summary>
-		/// <param name="query">A query or a fragment of a query</param>
+		/// <param name="query">A query or a fragment of a query.</param>
 		/// <returns>A new instance</returns>
 		public SqlQuery Add(string query)
 		{
@@ -423,7 +569,7 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Appends sql query object to this instance.
 		/// </summary>
-		/// <param name="query">A sql object contains the query</param>
+		/// <param name="query">A sql object contains the query.</param>
 		/// <returns>This instance</returns>
 		public SqlQuery Append(ISqlQuery query)
 		{
@@ -436,19 +582,19 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Appends sql query string to this instance.
 		/// </summary>
-		/// <param name="query">A query or a fragment of a query</param>
+		/// <param name="query">A query or a fragment of a query.</param>
 		/// <returns>This instance</returns>
 		public SqlQuery Append(string query)
 		{
 			if (String.IsNullOrEmpty(query))
 				throw new ArgumentNullException("query");
 
-			this.QueryString = Format(String.Format("{0} {1}", this.QueryString, query));
+			this.QueryString = String.Format("{0} {1}", this.QueryString, query);
 			return this;
 		}
 		
 		/// <summary>
-		/// Get the sql query
+		/// The sql query string.
 		/// </summary>
 		public override string ToString()
 		{
@@ -463,8 +609,19 @@ namespace SqlDataMapper
 		/// </summary>
 		/// <param name="name">The parameter name.</param>
 		/// <param name="value">The value. Pass it before through GetValue()</param>
-		/// <param name="suppressException">Suppress a exception if a paramater not found.</param>
 		/// <returns>The replaced sql query</returns>
+		private string Replace(string name, object value)
+		{
+			return Replace(name, value, false);
+		}
+
+		/// <summary>
+		/// Replace the parameters with the value.
+		/// </summary>
+		/// <param name="name">The parameter name.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="suppressException">Suppress a exception if a paramater not found.</param>
+		/// <returns>The replaced sql query.</returns>
 		private string Replace(string name, object value, bool suppressException)
 		{
 			if (String.IsNullOrEmpty(name))
@@ -481,110 +638,11 @@ namespace SqlDataMapper
 			{
 				if (matchCount == 0)
 				{
-					throw new SqlDataMapperException(String.Format("No named parameter found for name: '{0}'.", name));
+					throw new SqlDataMapperException(String.Format("The parameter '{0}' was not found.", name));
 				}
 			}
 
 			return newText;
-		}
-		
-		/// <summary>
-		/// Replace the parameters with the value.
-		/// </summary>
-		/// <param name="name">The parameter name.</param>
-		/// <param name="value">The value. Pass it before through GetValue()</param>
-		/// <returns>The replaced sql query</returns>
-		private string Replace(string name, object value)
-		{
-			return Replace(name, value, false);
-		}
-
-		/// <summary>
-		/// Remove comments (line and block)
-		/// </summary>
-		/// <param name="query">A sql string</param>
-		/// <returns>A formatted sql string</returns>
-		private string Format(string query)
-		{
-			string tmp = query;
-
-			//remove comments
-			//tmp = Regex.Replace(tmp, @"(--.*)$", " ", RegexOptions.Multiline);
-			//tmp = Regex.Replace(tmp, @"(/\*.*?\*/)", " ", RegexOptions.Singleline);
-
-			return tmp;
-		}
-
-		/// <summary>
-		/// Convert the the value to a sql type. Enumerables, <remarks>excluding strings and byte-arrays</remarks>, will transformed to comma separated line.
-		/// </summary>
-		/// <param name="value">The value</param>
-		/// <returns>A sql compatible string</returns>
-		private object GetValue(object value)
-		{
-			IEnumerable enumerable = value as IEnumerable;
-			if (enumerable != null && value.GetType() != typeof(string) && value.GetType() != typeof(byte[]))
-			{
-				StringBuilder sb = new StringBuilder();
-				foreach (var element in enumerable)
-				{
-					if (sb.Length > 0)
-						sb.Append(", ");
-					sb.Append(GetPrimitive(element));
-				}
-
-				return sb.ToString();
-			}
-
-			return GetPrimitive(value);
-		}
-
-		/// <summary>
-		/// Format the value to compatible sql string.
-		/// </summary>
-		/// <param name="value">The value.</param>
-		/// <returns>A sql compatible string.</returns>
-		private object GetPrimitive(object value)
-		{
-			if (this.Handler != null)
-				return this.Handler(value);
-			
-			if (value == null)
-			{
-				return String.Format("null");
-			}
-
-			if (value.GetType() == typeof(bool))
-			{
-				return (bool)value ? 1 : 0;
-			}
-
-			if (value.GetType() == typeof(byte[]))
-			{
-				return String.Format("0x{0}", BitConverter.ToString(value as byte[]).Replace("-", String.Empty));
-			}
-
-			if (value.GetType() == typeof(DateTime))
-			{
-				return String.Format("'{0:yyyy-MM-dd HH:mm:ss}'", value);
-			}
-
-			if (value.GetType() == typeof(Guid))
-			{
-				return String.Format("'{0}'", value);
-			}
-
-			if (value.GetType() == typeof(string))
-			{
-				return String.Format("'{0}'", value);
-			}
-
-			if (value.GetType() == typeof(char))
-			{
-				return String.Format("'{0}'", value);
-			}
-
-			return value;
 		}
 
 		#endregion

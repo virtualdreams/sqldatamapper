@@ -1,29 +1,72 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 
 namespace SqlDataMapper
 {
 	/// <summary>
-	/// The sql context
+	/// This class handles the connection to the database. Results from
+	/// the database will converted to classes or primitive types.
 	/// </summary>
 	public class SqlContext: ISqlContext
 	{
-		private ISqlProvider Provider { get; set; }
-		private bool IsTransactionSession { get; set; }
-		private bool ParameterCheck { get; set; }
-		
 		/// <summary>
-		/// Create a new context out of a custom provider
+		/// Get or set parameter check.
 		/// </summary>
-		/// <param name="provider"></param>
-		public SqlContext(ISqlProvider provider)
+		public bool ParameterCheck { get; set; }
+		
+		private bool IsTransactionSession { get; set; }
+		private DbConnection Connection { get; set; }
+		private DbTransaction Transaction { get; set; }
+
+		/// <summary>
+		/// Create a new database context.
+		/// </summary>
+		/// <param name="assemblyName">The (full qualified) assembly name.</param>
+		/// <param name="connectionClass">The connection class.</param>
+		/// <param name="connectionString">The connection string.</param>
+		public SqlContext(string assemblyName, string connectionClass, string connectionString)
 		{
-			if (provider == null)
-				throw new ArgumentNullException("provider");
-			
-			Provider = provider;
+			try
+			{
+				Connection = (DbConnection)Activator.CreateInstance(assemblyName, connectionClass).Unwrap();
+				Connection.ConnectionString = connectionString;
+			}
+			catch (Exception ex)
+			{
+				throw new SqlDataMapperException(String.Format("Can't create database object: {0}", ex.Message), ex);
+			}
+		}
+
+		/// <summary>
+		/// Open a connection to database.
+		/// </summary>
+		private void Open()
+		{
+			Close();
+			try
+			{
+				Connection.Open();
+			}
+			catch (Exception ex)
+			{
+				Close();
+				throw new SqlDataMapperException(String.Format("Can't open datenbase: {0}", ex.Message));
+			}
+		}
+
+		/// <summary>
+		/// Close the connection to database.
+		/// </summary>
+		private void Close()
+		{
+			if (Connection != null && Connection.State == ConnectionState.Open)
+			{
+				Connection.Close();
+			}
 		}
 
 		/// <summary>
@@ -36,19 +79,20 @@ namespace SqlDataMapper
 		{
 			if (IsTransactionSession)
 			{
-				throw new SqlDataMapperException("SqlMapper could not invoke BeginTransaction(). A transaction is already started. Call CommitTransaction() or RollbackTransaction() first.");
+				throw new SqlDataMapperException("SqlContext could not invoke BeginTransaction(). A transaction is already started. Call CommitTransaction() or RollbackTransaction() first.");
 			}
 
 			try
 			{
-				Provider.Open();
+				Open();
+				Transaction = Connection.BeginTransaction();
 				IsTransactionSession = true;
-				Provider.BeginTransaction();
 			}
 			catch (Exception ex)
 			{
-				Provider.Close();
 				IsTransactionSession = false;
+				Close();
+				
 				throw ex;
 			}
 		}
@@ -61,20 +105,25 @@ namespace SqlDataMapper
 		/// </remarks>
 		public void CommitTransaction()
 		{
-			if (!IsTransactionSession)
-			{
-				throw new SqlDataMapperException("SqlMapper could not invoke CommitTransaction(). No transaction was started. Call BeginTransaction() first.");
-			}
-
 			try
 			{
-				Provider.CommitTransaction();
+				if (Transaction != null)
+				{
+					Transaction.Commit();
+					Transaction.Dispose();
+					Transaction = null;
+				}
 			}
 			catch (Exception ex)
 			{
 				try
 				{
-					Provider.RollbackTransaction();
+					if (Transaction != null)
+					{
+						Transaction.Rollback();
+						Transaction.Dispose();
+						Transaction = null;
+					}
 				}
 				catch (Exception iex)
 				{
@@ -85,7 +134,7 @@ namespace SqlDataMapper
 			finally
 			{
 				IsTransactionSession = false;
-				Provider.Close();
+				Close();
 			}
 		}
 
@@ -97,14 +146,14 @@ namespace SqlDataMapper
 		/// </remarks>
 		public void RollbackTransaction()
 		{
-			if (!IsTransactionSession)
-			{
-				throw new SqlDataMapperException("SqlMapper could not invoke RollbackTransaction(). No transaction was started. Call BeginTransaction() first.");
-			}
-
 			try
 			{
-				Provider.RollbackTransaction();
+				if (Transaction != null)
+				{
+					Transaction.Rollback();
+					Transaction.Dispose();
+					Transaction = null;
+				}
 			}
 			catch (Exception ex)
 			{
@@ -113,7 +162,26 @@ namespace SqlDataMapper
 			finally
 			{
 				IsTransactionSession = false;
-				Provider.Close();
+				Close();
+			}
+		}
+
+		/// <summary>
+		/// Run the commands in a transaction.
+		/// </summary>
+		/// <param name="action"></param>
+		public void RunInTransaction(Action action)
+		{
+			try
+			{
+				BeginTransaction();
+				action();
+				CommitTransaction();
+			}
+			catch (Exception)
+			{
+				RollbackTransaction();
+				throw;
 			}
 		}
 
@@ -130,11 +198,11 @@ namespace SqlDataMapper
 			{
 				if (!IsTransactionSession)
 				{
-					Provider.Open();
+					Open();
 					closeConnection = true;
 				}
 
-				return Provider.SelectObject<TDestination>(query.Check(this.ParameterCheck).QueryString);
+				return QueryObject<TDestination>(query);
 			}
 			catch (Exception ex)
 			{
@@ -144,7 +212,7 @@ namespace SqlDataMapper
 			{
 				if (closeConnection)
 				{
-					Provider.Close();
+					Close();
 				}
 			}
 		}
@@ -162,11 +230,11 @@ namespace SqlDataMapper
 			{
 				if (!IsTransactionSession)
 				{
-					Provider.Open();
+					Open();
 					closeConnection = true;
 				}
 
-				return Provider.SelectObjectList<TDestination>(query.Check(this.ParameterCheck).QueryString).ToArray();
+				return QueryObjectList<TDestination>(query);
 			}
 			catch (Exception ex)
 			{
@@ -176,7 +244,7 @@ namespace SqlDataMapper
 			{
 				if (closeConnection)
 				{
-					Provider.Close();
+					Close();
 				}
 			}
 		}
@@ -194,11 +262,11 @@ namespace SqlDataMapper
 			{
 				if (!IsTransactionSession)
 				{
-					Provider.Open();
+					Open();
 					closeConnection = true;
 				}
 
-				return Provider.SelectScalar<TDestination>(query.Check(this.ParameterCheck).QueryString);
+				return QueryScalar<TDestination>(query);
 			}
 			catch (Exception ex)
 			{
@@ -208,7 +276,7 @@ namespace SqlDataMapper
 			{
 				if (closeConnection)
 				{
-					Provider.Close();
+					Close();
 				}
 			}
 		}
@@ -226,11 +294,11 @@ namespace SqlDataMapper
 			{
 				if (!IsTransactionSession)
 				{
-					Provider.Open();
+					Open();
 					closeConnection = true;
 				}
 
-				return Provider.SelectScalarList<TDestination>(query.Check(this.ParameterCheck).QueryString).ToArray();
+				return QueryScalarList<TDestination>(query);
 			}
 			catch (Exception ex)
 			{
@@ -240,7 +308,7 @@ namespace SqlDataMapper
 			{
 				if (closeConnection)
 				{
-					Provider.Close();
+					Close();
 				}
 			}
 		}
@@ -249,19 +317,19 @@ namespace SqlDataMapper
 		/// Executes a sql insert statement.
 		/// </summary>
 		/// <param name="query">The query.</param>
-		/// <returns>The affected rows</returns>
+		/// <returns>The affected rows.</returns>
 		public int Insert(ISqlQuery query)
 		{
-			bool flag = false;
+			bool closeConnection = false;
 			try
 			{
 				if (!IsTransactionSession)
 				{
-					Provider.Open();
-					flag = true;
+					Open();
+					closeConnection = true;
 				}
 
-				return Provider.Insert(query.Check(this.ParameterCheck).QueryString);
+				return ExecuteNonQuery(query);
 			}
 			catch (Exception ex)
 			{
@@ -269,9 +337,9 @@ namespace SqlDataMapper
 			}
 			finally
 			{
-				if (flag)
+				if (closeConnection)
 				{
-					Provider.Close();
+					Close();
 				}
 			}
 		}
@@ -280,19 +348,19 @@ namespace SqlDataMapper
 		/// Executes a sql update statement.
 		/// </summary>
 		/// <param name="query">The query.</param>
-		/// <returns>The affected rows</returns>
+		/// <returns>The affected rows.</returns>
 		public int Update(ISqlQuery query)
 		{
-			bool flag = false;
+			bool closeConnection = false;
 			try
 			{
 				if (!IsTransactionSession)
 				{
-					Provider.Open();
-					flag = true;
+					Open();
+					closeConnection = true;
 				}
 
-				return Provider.Update(query.Check(this.ParameterCheck).QueryString);
+				return ExecuteNonQuery(query);
 			}
 			catch (Exception ex)
 			{
@@ -300,9 +368,9 @@ namespace SqlDataMapper
 			}
 			finally
 			{
-				if (flag)
+				if (closeConnection)
 				{
-					Provider.Close();
+					Close();
 				}
 			}
 		}
@@ -311,19 +379,19 @@ namespace SqlDataMapper
 		/// Executes a sql delete statement.
 		/// </summary>
 		/// <param name="query">The query.</param>
-		/// <returns>The affected rows</returns>
+		/// <returns>The affected rows.</returns>
 		public int Delete(ISqlQuery query)
 		{
-			bool flag = false;
+			bool closeConnection = false;
 			try
 			{
 				if (!IsTransactionSession)
 				{
-					Provider.Open();
-					flag = true;
+					Open();
+					closeConnection = true;
 				}
 
-				return Provider.Delete(query.Check(this.ParameterCheck).QueryString);
+				return ExecuteNonQuery(query);
 			}
 			catch (Exception ex)
 			{
@@ -331,10 +399,190 @@ namespace SqlDataMapper
 			}
 			finally
 			{
-				if (flag)
+				if (closeConnection)
 				{
-					Provider.Close();
+					Close();
 				}
+			}
+		}
+
+		/// <summary>
+		/// Query for scalar list.
+		/// </summary>
+		/// <typeparam name="TDestination">The destination type.</typeparam>
+		/// <param name="query">The query.</param>
+		/// <returns>List of scalar values.</returns>
+		private IEnumerable<TDestination> QueryScalarList<TDestination>(ISqlQuery query) where TDestination : IConvertible
+		{
+			using (DbCommand cmd = Connection.CreateCommand())
+			{
+				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
+
+				if (IsTransactionSession && Transaction != null)
+				{
+					cmd.Transaction = Transaction;
+				}
+
+				cmd.Prepare();
+
+				using (DbDataReader reader = cmd.ExecuteReader())
+				{
+					List<TDestination> result = new List<TDestination>();
+					while (reader.Read())
+					{
+						object obj = reader.GetValue(0);
+
+						if (obj is TDestination)
+						{
+							result.Add((TDestination)obj);
+						}
+						else
+						{
+							TDestination _return = default(TDestination);
+							try
+							{
+								_return = (TDestination)Convert.ChangeType(obj, typeof(TDestination));
+							}
+							catch (Exception ex)
+							{
+								throw new SqlDataMapperException(String.Format("Invalid cast. Type '{0}' is required.", obj.GetType()), ex);
+							}
+							result.Add(_return);
+						}
+					}
+					return result;
+				}
+			}
+		}
+
+		/// <summary>
+		/// Query scalar.
+		/// </summary>
+		/// <typeparam name="TDestination">The destination type.</typeparam>
+		/// <param name="query">The query.</param>
+		/// <returns>The scalar value.</returns>
+		private TDestination QueryScalar<TDestination>(ISqlQuery query) where TDestination : IConvertible
+		{
+			using (DbCommand cmd = Connection.CreateCommand())
+			{
+				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
+
+				if (IsTransactionSession && Transaction != null)
+				{
+					cmd.Transaction = Transaction;
+				}
+
+				cmd.Prepare();
+
+				object obj = cmd.ExecuteScalar();
+
+				if (obj is TDestination)
+				{
+					return (TDestination)obj;
+				}
+				else
+				{
+					TDestination _result = default(TDestination);
+					try
+					{
+						_result = (TDestination)Convert.ChangeType(obj, typeof(TDestination));
+					}
+					catch (Exception ex)
+					{
+						throw new SqlDataMapperException(String.Format("Invalid cast. Type '{0}' required.", obj.GetType()), ex);
+					}
+					return _result;
+				}
+			}
+		}
+
+		/// <summary>
+		/// Query for a list of objects.
+		/// </summary>
+		/// <typeparam name="TDestination">The destination type.</typeparam>
+		/// <param name="query">The query.</param>
+		/// <returns>List of destination objects.</returns>
+		private IEnumerable<TDestination> QueryObjectList<TDestination>(ISqlQuery query) where TDestination : class, new()
+		{
+			using (DbCommand cmd = Connection.CreateCommand())
+			{
+				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
+
+				if (IsTransactionSession && Transaction != null)
+				{
+					cmd.Transaction = Transaction;
+				}
+
+				cmd.Prepare();
+
+				var mapper = new SqlMapper<TDestination>();
+				using (DbDataReader reader = cmd.ExecuteReader())
+				{
+					var result = new List<TDestination>();
+					while (reader.Read())
+					{
+						result.Add(mapper.MapFrom(reader));
+					}
+					return result;
+				}
+			}
+		}
+
+		/// <summary>
+		/// Query for an object.
+		/// </summary>
+		/// <typeparam name="TDestination">The destination type.</typeparam>
+		/// <param name="query">The query.</param>
+		/// <returns>One destination object.</returns>
+		private TDestination QueryObject<TDestination>(ISqlQuery query) where TDestination : class, new()
+		{
+			using (DbCommand cmd = Connection.CreateCommand())
+			{
+				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
+
+				if (IsTransactionSession && Transaction != null)
+				{
+					cmd.Transaction = Transaction;
+				}
+
+				cmd.Prepare();
+
+				var mapper = new SqlMapper<TDestination>();
+				using (DbDataReader reader = cmd.ExecuteReader())
+				{
+					if (reader.HasRows)
+					{
+						reader.Read();
+
+						return mapper.MapFrom(reader);
+					}
+					else
+					{
+						return default(TDestination);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Executes a non query.
+		/// </summary>
+		/// <param name="query">The query.</param>
+		/// <returns>Affected rows.</returns>
+		private int ExecuteNonQuery(ISqlQuery query)
+		{
+			using (DbCommand cmd = Connection.CreateCommand())
+			{
+				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
+
+				if (IsTransactionSession && Transaction != null)
+				{
+					cmd.Transaction = Transaction;
+				}
+
+				cmd.Prepare();
+
+				return cmd.ExecuteNonQuery();
 			}
 		}
 	}
