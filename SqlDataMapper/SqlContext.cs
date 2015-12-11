@@ -18,7 +18,7 @@ namespace SqlDataMapper
 		/// </summary>
 		public bool ParameterCheck { get; set; }
 		
-		private bool IsTransactionSession { get; set; }
+		private bool IsInTransaction { get; set; }
 		private DbConnection Connection { get; set; }
 		private DbTransaction Transaction { get; set; }
 
@@ -77,7 +77,7 @@ namespace SqlDataMapper
 		/// </remarks>
 		public void BeginTransaction()
 		{
-			if (IsTransactionSession)
+			if (IsInTransaction)
 			{
 				throw new SqlDataMapperException("SqlContext could not invoke BeginTransaction(). A transaction is already started. Call CommitTransaction() or RollbackTransaction() first.");
 			}
@@ -86,13 +86,42 @@ namespace SqlDataMapper
 			{
 				Open();
 				Transaction = Connection.BeginTransaction();
-				IsTransactionSession = true;
+				IsInTransaction = true;
 			}
 			catch (Exception ex)
 			{
-				IsTransactionSession = false;
+				IsInTransaction = false;
 				Close();
 				
+				throw ex;
+			}
+		}
+
+		/// <summary>
+		/// Begins a database transaction.
+		/// </summary>
+		/// <remarks>
+		/// The method opens a connection to the datebase. The connection will closed through <c>CommitTransaction</c> or <c>RollbackTransaction</c>.
+		/// </remarks>
+		/// <param name="isolationLevel">Isolationlevel for the transaction.</param>
+		public void BeginTransaction(IsolationLevel isolationLevel)
+		{
+			if (IsInTransaction)
+			{
+				throw new SqlDataMapperException("SqlContext could not invoke BeginTransaction(). A transaction is already started. Call CommitTransaction() or RollbackTransaction() first.");
+			}
+
+			try
+			{
+				Open();
+				Transaction = Connection.BeginTransaction(isolationLevel);
+				IsInTransaction = true;
+			}
+			catch (Exception ex)
+			{
+				IsInTransaction = false;
+				Close();
+
 				throw ex;
 			}
 		}
@@ -133,7 +162,7 @@ namespace SqlDataMapper
 			}
 			finally
 			{
-				IsTransactionSession = false;
+				IsInTransaction = false;
 				Close();
 			}
 		}
@@ -161,13 +190,13 @@ namespace SqlDataMapper
 			}
 			finally
 			{
-				IsTransactionSession = false;
+				IsInTransaction = false;
 				Close();
 			}
 		}
 
 		/// <summary>
-		/// Run the commands in a transaction.
+		/// Run commands in a transaction.
 		/// </summary>
 		/// <param name="action"></param>
 		public void RunInTransaction(Action action)
@@ -175,6 +204,26 @@ namespace SqlDataMapper
 			try
 			{
 				BeginTransaction();
+				action();
+				CommitTransaction();
+			}
+			catch (Exception)
+			{
+				RollbackTransaction();
+				throw;
+			}
+		}
+
+		/// <summary>
+		/// Run commands in a transaction.
+		/// </summary>
+		/// <param name="isolationLevel">Isolationlevel for the transaction.</param>
+		/// <param name="action"></param>
+		public void RunInTransaction(IsolationLevel isolationLevel, Action action)
+		{
+			try
+			{
+				BeginTransaction(isolationLevel);
 				action();
 				CommitTransaction();
 			}
@@ -196,7 +245,7 @@ namespace SqlDataMapper
 			bool closeConnection = false;
 			try
 			{
-				if (!IsTransactionSession)
+				if (!IsInTransaction)
 				{
 					Open();
 					closeConnection = true;
@@ -228,7 +277,7 @@ namespace SqlDataMapper
 			bool closeConnection = false;
 			try
 			{
-				if (!IsTransactionSession)
+				if (!IsInTransaction)
 				{
 					Open();
 					closeConnection = true;
@@ -260,7 +309,7 @@ namespace SqlDataMapper
 			bool closeConnection = false;
 			try
 			{
-				if (!IsTransactionSession)
+				if (!IsInTransaction)
 				{
 					Open();
 					closeConnection = true;
@@ -292,7 +341,7 @@ namespace SqlDataMapper
 			bool closeConnection = false;
 			try
 			{
-				if (!IsTransactionSession)
+				if (!IsInTransaction)
 				{
 					Open();
 					closeConnection = true;
@@ -323,7 +372,7 @@ namespace SqlDataMapper
 			bool closeConnection = false;
 			try
 			{
-				if (!IsTransactionSession)
+				if (!IsInTransaction)
 				{
 					Open();
 					closeConnection = true;
@@ -354,7 +403,7 @@ namespace SqlDataMapper
 			bool closeConnection = false;
 			try
 			{
-				if (!IsTransactionSession)
+				if (!IsInTransaction)
 				{
 					Open();
 					closeConnection = true;
@@ -385,7 +434,7 @@ namespace SqlDataMapper
 			bool closeConnection = false;
 			try
 			{
-				if (!IsTransactionSession)
+				if (!IsInTransaction)
 				{
 					Open();
 					closeConnection = true;
@@ -418,7 +467,7 @@ namespace SqlDataMapper
 			{
 				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
 
-				if (IsTransactionSession && Transaction != null)
+				if (IsInTransaction && Transaction != null)
 				{
 					cmd.Transaction = Transaction;
 				}
@@ -467,7 +516,7 @@ namespace SqlDataMapper
 			{
 				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
 
-				if (IsTransactionSession && Transaction != null)
+				if (IsInTransaction && Transaction != null)
 				{
 					cmd.Transaction = Transaction;
 				}
@@ -508,7 +557,7 @@ namespace SqlDataMapper
 			{
 				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
 
-				if (IsTransactionSession && Transaction != null)
+				if (IsInTransaction && Transaction != null)
 				{
 					cmd.Transaction = Transaction;
 				}
@@ -540,7 +589,7 @@ namespace SqlDataMapper
 			{
 				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
 
-				if (IsTransactionSession && Transaction != null)
+				if (IsInTransaction && Transaction != null)
 				{
 					cmd.Transaction = Transaction;
 				}
@@ -575,7 +624,7 @@ namespace SqlDataMapper
 			{
 				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
 
-				if (IsTransactionSession && Transaction != null)
+				if (IsInTransaction && Transaction != null)
 				{
 					cmd.Transaction = Transaction;
 				}
