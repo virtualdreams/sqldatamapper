@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
+using System.Data;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace SqlDataMapper
 {
@@ -32,7 +31,7 @@ namespace SqlDataMapper
 		/// </summary>
 		public SqlMapper()
 		{
-			var properties = typeof(T).GetProperties(BindingFlags.SetProperty | BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance);
+			var properties = typeof(T).GetProperties(BindingFlags.SetProperty | BindingFlags.Public | BindingFlags.Instance);
 
 			foreach (var property in properties)
 			{
