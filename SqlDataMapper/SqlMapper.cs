@@ -49,7 +49,7 @@ namespace SqlDataMapper
 		/// </summary>
 		/// <param name="dataReader"></param>
 		/// <returns></returns>
-		public T MapFrom(DbDataReader dataReader)
+		public T MapFrom(IDataReader dataReader)
 		{
 			T newObject = Activator.CreateInstance<T>();
 			var tableColumns = TableColumns(dataReader);
@@ -103,7 +103,7 @@ namespace SqlDataMapper
 		/// </summary>
 		/// <param name="dataReader"></param>
 		/// <returns></returns>
-		private IEnumerable<TableColumn> TableColumns(DbDataReader dataReader)
+		private IEnumerable<TableColumn> TableColumns(IDataReader dataReader)
 		{
 			for (int i = 0; i < dataReader.FieldCount; ++i)
 			{

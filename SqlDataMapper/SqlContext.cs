@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
 
 namespace SqlDataMapper
 {
@@ -19,8 +17,8 @@ namespace SqlDataMapper
 		public bool ParameterCheck { get; set; }
 		
 		private bool IsInTransaction { get; set; }
-		private DbConnection Connection { get; set; }
-		private DbTransaction Transaction { get; set; }
+		private IDbConnection Connection { get; set; }
+		private IDbTransaction Transaction { get; set; }
 
 		/// <summary>
 		/// Create a new database context.
@@ -463,7 +461,7 @@ namespace SqlDataMapper
 		/// <returns>List of scalar values.</returns>
 		private IEnumerable<TDestination> QueryScalarList<TDestination>(ISqlQuery query) where TDestination : IConvertible
 		{
-			using (DbCommand cmd = Connection.CreateCommand())
+			using (IDbCommand cmd = Connection.CreateCommand())
 			{
 				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
 
@@ -474,7 +472,7 @@ namespace SqlDataMapper
 
 				cmd.Prepare();
 
-				using (DbDataReader reader = cmd.ExecuteReader())
+				using (IDataReader reader = cmd.ExecuteReader())
 				{
 					List<TDestination> result = new List<TDestination>();
 					while (reader.Read())
@@ -512,7 +510,7 @@ namespace SqlDataMapper
 		/// <returns>The scalar value.</returns>
 		private TDestination QueryScalar<TDestination>(ISqlQuery query) where TDestination : IConvertible
 		{
-			using (DbCommand cmd = Connection.CreateCommand())
+			using (IDbCommand cmd = Connection.CreateCommand())
 			{
 				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
 
@@ -553,7 +551,7 @@ namespace SqlDataMapper
 		/// <returns>List of destination objects.</returns>
 		private IEnumerable<TDestination> QueryObjectList<TDestination>(ISqlQuery query) where TDestination : class, new()
 		{
-			using (DbCommand cmd = Connection.CreateCommand())
+			using (IDbCommand cmd = Connection.CreateCommand())
 			{
 				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
 
@@ -565,7 +563,7 @@ namespace SqlDataMapper
 				cmd.Prepare();
 
 				var mapper = new SqlMapper<TDestination>();
-				using (DbDataReader reader = cmd.ExecuteReader())
+				using (IDataReader reader = cmd.ExecuteReader())
 				{
 					var result = new List<TDestination>();
 					while (reader.Read())
@@ -585,7 +583,7 @@ namespace SqlDataMapper
 		/// <returns>One destination object.</returns>
 		private TDestination QueryObject<TDestination>(ISqlQuery query) where TDestination : class, new()
 		{
-			using (DbCommand cmd = Connection.CreateCommand())
+			using (IDbCommand cmd = Connection.CreateCommand())
 			{
 				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
 
@@ -597,12 +595,10 @@ namespace SqlDataMapper
 				cmd.Prepare();
 
 				var mapper = new SqlMapper<TDestination>();
-				using (DbDataReader reader = cmd.ExecuteReader())
+				using (IDataReader reader = cmd.ExecuteReader())
 				{
-					if (reader.HasRows)
+					if (reader.Read())
 					{
-						reader.Read();
-
 						return mapper.MapFrom(reader);
 					}
 					else
@@ -620,7 +616,7 @@ namespace SqlDataMapper
 		/// <returns>Affected rows.</returns>
 		private int ExecuteNonQuery(ISqlQuery query)
 		{
-			using (DbCommand cmd = Connection.CreateCommand())
+			using (IDbCommand cmd = Connection.CreateCommand())
 			{
 				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
 
