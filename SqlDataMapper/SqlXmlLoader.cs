@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using SqlDataMapper.Extension;
+using System;
 using System.Linq;
-using System.Text;
 using System.Xml.Linq;
-using SqlDataMapper.Extension;
 
 namespace SqlDataMapper
 {

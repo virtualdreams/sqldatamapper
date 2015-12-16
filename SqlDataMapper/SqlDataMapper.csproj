@@ -43,7 +43,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ISqlFormatter.cs" />
-    <Compile Include="ISqlProvider.cs" />
     <Compile Include="ISqlQuery.cs" />
     <Compile Include="ISqlContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
