@@ -36,6 +36,11 @@ namespace SqlDataMapper
 				Query = value;
 			}
 		}
+
+		/// <summary>
+		/// Suppress throwing exceptions for missing parameters.
+		/// </summary>
+		protected internal bool SuppressException { get; set; }
 		
 		/// <summary>
 		/// Create an new sql query object with an empty query
@@ -611,7 +616,7 @@ namespace SqlDataMapper
 		/// <returns>The replaced sql query</returns>
 		private string Replace(string name, object value)
 		{
-			return Replace(name, value, false);
+			return Replace(name, value, SuppressException);
 		}
 
 		/// <summary>

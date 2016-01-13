@@ -45,6 +45,41 @@ namespace SqlDataMapper.Extension
 	}
 
 	/// <summary>
+	/// Set properties from an class as parameters.
+	/// </summary>
+	public static class SqlQueryExtension
+	{
+		/// <summary>
+		/// Set properties from an class as parameters.
+		/// </summary>
+		/// <typeparam name="TSource">The source.</typeparam>
+		/// <param name="query">The query instance.</param>
+		/// <param name="value">The value.</param>
+		/// <returns>This instance.</returns>
+		public static SqlQuery SetParameter<TSource>(this SqlQuery query, TSource value) where TSource : class
+		{
+			if (query == null)
+				throw new ArgumentNullException("query");
+
+			if (value == null)
+				throw new ArgumentNullException("value");
+
+			var state = query.SuppressException;
+			query.SuppressException = true;
+			var properties = typeof(TSource).GetProperties(BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance);
+			foreach (var property in properties)
+			{
+				var column = new Column(property);
+
+				query.SetParameter(column.Name, column.GetValue(value));
+			}
+
+			query.SuppressException = state;
+			return query;
+		}
+	}
+
+	/// <summary>
 	/// Extension for <c>XDocument</c>.
 	/// </summary>
 	internal static class XDocumentExtension
