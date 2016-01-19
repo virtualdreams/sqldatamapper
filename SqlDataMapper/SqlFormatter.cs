@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Text;
+using SqlDataMapper.Extension;
 
 namespace SqlDataMapper
 {
@@ -52,7 +53,7 @@ namespace SqlDataMapper
 
 			if (value.GetType() == typeof(byte[]))
 			{
-				return String.Format("0x{0}", BitConverter.ToString(value as byte[]).Replace("-", String.Empty));
+				return String.Format("0x{0}", (value as byte[]).ToHex());
 			}
 
 			if (value.GetType() == typeof(DateTime))
