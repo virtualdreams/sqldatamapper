@@ -1,7 +1,7 @@
 SqlDataMapper
 =============
 
-Simple library to map sql result sets into C# classes. Can also map C# classes into parameter objects.
+Simple library to map sql result sets into C# classes.
 
 Usage
 -----
@@ -14,7 +14,11 @@ Sample code to work with the library.
 	{
 		class Data
 		{
+			[Alias("Table_ID")]
+			[NotNull]
 			public int Id { get; set; }
+			
+			[Required]
 			public string Name { get; set; }
 		}
 		

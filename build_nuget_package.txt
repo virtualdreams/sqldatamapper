@@ -1,0 +1,3 @@
+Build nuget package:
+
+nuget pack -OutputDirectory ../package/ SqlDataMapper.nuspec
