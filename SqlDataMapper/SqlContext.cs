@@ -11,11 +11,6 @@ namespace SqlDataMapper
 	/// </summary>
 	public class SqlContext: ISqlContext
 	{
-		/// <summary>
-		/// Get or set parameter check.
-		/// </summary>
-		public bool ParameterCheck { get; set; }
-		
 		private bool IsInTransaction { get; set; }
 		private IDbConnection Connection { get; set; }
 		private IDbTransaction Transaction { get; set; }
@@ -463,7 +458,7 @@ namespace SqlDataMapper
 		{
 			using (IDbCommand cmd = Connection.CreateCommand())
 			{
-				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
+				cmd.CommandText = query.QueryString;
 
 				if (IsInTransaction && Transaction != null)
 				{
@@ -512,7 +507,7 @@ namespace SqlDataMapper
 		{
 			using (IDbCommand cmd = Connection.CreateCommand())
 			{
-				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
+				cmd.CommandText = query.QueryString;
 
 				if (IsInTransaction && Transaction != null)
 				{
@@ -553,7 +548,7 @@ namespace SqlDataMapper
 		{
 			using (IDbCommand cmd = Connection.CreateCommand())
 			{
-				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
+				cmd.CommandText = query.QueryString;
 
 				if (IsInTransaction && Transaction != null)
 				{
@@ -585,7 +580,7 @@ namespace SqlDataMapper
 		{
 			using (IDbCommand cmd = Connection.CreateCommand())
 			{
-				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
+				cmd.CommandText = query.QueryString;
 
 				if (IsInTransaction && Transaction != null)
 				{
@@ -618,7 +613,7 @@ namespace SqlDataMapper
 		{
 			using (IDbCommand cmd = Connection.CreateCommand())
 			{
-				cmd.CommandText = query.Check(this.ParameterCheck).QueryString;
+				cmd.CommandText = query.QueryString;
 
 				if (IsInTransaction && Transaction != null)
 				{

@@ -103,7 +103,7 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Check for empty parameter names an throws an exception if found any.
 		/// </summary>
-		public ISqlQuery Check()
+		public SqlQuery Check()
 		{
 			return Check(true);
 		}
@@ -112,7 +112,7 @@ namespace SqlDataMapper
 		/// Check for empty parameter names an throws an exception if found any.
 		/// </summary>
 		/// <param name="check">Perform the check if set to true.</param>
-		public ISqlQuery Check(bool check)
+		public SqlQuery Check(bool check)
 		{
 			if(check)
 			{
