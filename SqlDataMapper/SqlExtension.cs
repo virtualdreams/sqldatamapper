@@ -56,6 +56,7 @@ namespace SqlDataMapper.Extension
 		/// <param name="query">The query instance.</param>
 		/// <param name="value">The value.</param>
 		/// <returns>This instance.</returns>
+		[Obsolete("Not supported")]
 		public static SqlQuery SetParameter<TSource>(this SqlQuery query, TSource value) where TSource : class
 		{
 			if (query == null)
