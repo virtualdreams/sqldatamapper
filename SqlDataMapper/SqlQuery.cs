@@ -86,17 +86,14 @@ namespace SqlDataMapper
 		}
 
 		/// <summary>
-		/// Check for empty parameter names and return a list of them.
+		/// Get all parameters.
 		/// </summary>
-		public IEnumerable<string> GetUnresolvedParameters()
+		public IEnumerable<string> GetParameters()
 		{
-			MatchCollection mc = Regex.Matches(this.QueryString, "@([a-zA-Z0-9_]+)", RegexOptions.Singleline);
-			if (mc.Count > 0)
+			var mc = Regex.Matches(this.QueryString, "@([a-zA-Z0-9_]+)", RegexOptions.Singleline);
+			foreach (Match match in mc)
 			{
-				foreach (Match m in mc)
-				{
-					yield return m.Groups[1].Value;
-				}
+				yield return match.Groups[1].Value;
 			}
 		}
 
@@ -116,7 +113,7 @@ namespace SqlDataMapper
 		{
 			if(check)
 			{
-				var keys = GetUnresolvedParameters();
+				var keys = GetParameters();
 				if (keys.Count() > 0)
 				{
 					StringBuilder sb = new StringBuilder();
