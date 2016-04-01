@@ -11,6 +11,6 @@ namespace SqlDataMapper
 		/// </summary>
 		/// <param name="value"></param>
 		/// <returns></returns>
-		object GetValue(object value);
+		string GetValue(object value);
 	}
 }

@@ -13,6 +13,16 @@ namespace SqlDataMapper
 	public class SqlQuery: ISqlQuery
 	{
 		/// <summary>
+		/// Curly bracket parameters.
+		/// </summary>
+		static private Regex RegexParameter = new Regex(@"\{([a-zA-Z0-9_][a-zA-Z0-9_]+)\}", RegexOptions.Compiled);
+
+		/// <summary>
+		/// Regular expression for parameter name.
+		/// </summary>
+		static private Regex RegexName = new Regex("[a-zA-Z0-9_][a-zA-Z0-9_]+", RegexOptions.Compiled);
+
+		/// <summary>
 		/// The query string.
 		/// </summary>
 		private string Query { get; set; }
@@ -36,11 +46,6 @@ namespace SqlDataMapper
 				Query = value;
 			}
 		}
-
-		/// <summary>
-		/// Suppress throwing exceptions for missing parameters.
-		/// </summary>
-		protected internal bool SuppressException { get; set; }
 		
 		/// <summary>
 		/// Create an new sql query object with an empty query
@@ -90,8 +95,7 @@ namespace SqlDataMapper
 		/// </summary>
 		public IEnumerable<string> GetParameters()
 		{
-			var mc = Regex.Matches(this.QueryString, "@([a-zA-Z0-9_]+)", RegexOptions.Singleline);
-			foreach (Match match in mc)
+			foreach (Match match in RegexParameter.Matches(this.QueryString))
 			{
 				yield return match.Groups[1].Value;
 			}
@@ -117,7 +121,7 @@ namespace SqlDataMapper
 				if (keys.Count() > 0)
 				{
 					StringBuilder sb = new StringBuilder();
-					foreach (string key in keys)
+					foreach (var key in keys)
 					{
 						if (sb.Length > 0)
 							sb.Append(", ");
@@ -611,39 +615,20 @@ namespace SqlDataMapper
 		/// <param name="name">The parameter name.</param>
 		/// <param name="value">The value. Pass it before through GetValue()</param>
 		/// <returns>The replaced sql query</returns>
-		private string Replace(string name, object value)
-		{
-			return Replace(name, value, SuppressException);
-		}
-
-		/// <summary>
-		/// Replace the parameters with the value.
-		/// </summary>
-		/// <param name="name">The parameter name.</param>
-		/// <param name="value">The value.</param>
-		/// <param name="suppressException">Suppress a exception if a paramater not found.</param>
-		/// <returns>The replaced sql query.</returns>
-		private string Replace(string name, object value, bool suppressException)
+		private string Replace(string name, string value)
 		{
 			if (String.IsNullOrEmpty(name))
 				throw new ArgumentNullException("name");
 
-			int matchCount = 0;
-			string newText = Regex.Replace(this.QueryString, String.Format("@{0}", name.Trim()), match =>
+			return RegexParameter.Replace(this.QueryString, match =>
 			{
-				matchCount++;
-				return match.Result(String.Format(CultureInfo.InvariantCulture.NumberFormat, "{0}", value));
-			}, RegexOptions.IgnoreCase);
-			
-			if(!suppressException)
-			{
-				if (matchCount == 0)
+				var key = match.Groups[1].Value;
+				if (key.Equals(name, StringComparison.OrdinalIgnoreCase))
 				{
-					throw new SqlDataMapperException(String.Format("The parameter '{0}' was not found.", name));
+					return match.Result(value);
 				}
-			}
-
-			return newText;
+				return match.Value;
+			});
 		}
 
 		#endregion

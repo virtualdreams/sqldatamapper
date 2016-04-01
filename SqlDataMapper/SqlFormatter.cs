@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Text;
 using SqlDataMapper.Extension;
+using System.Globalization;
 
 namespace SqlDataMapper
 {
@@ -15,7 +16,7 @@ namespace SqlDataMapper
 		/// </summary>
 		/// <param name="value">The value.</param>
 		/// <returns>A sql compatible string.</returns>
-		public object GetValue(object value)
+		public string GetValue(object value)
 		{
 			IEnumerable enumerable = value as IEnumerable;
 			if (enumerable != null && value.GetType() != typeof(string) && value.GetType() != typeof(byte[]))
@@ -39,7 +40,7 @@ namespace SqlDataMapper
 		/// </summary>
 		/// <param name="value">The value.</param>
 		/// <returns>A sql compatible string.</returns>
-		private object GetPrimitive(object value)
+		private string GetPrimitive(object value)
 		{
 			if (value == null)
 			{
@@ -48,7 +49,7 @@ namespace SqlDataMapper
 
 			if (value.GetType() == typeof(bool))
 			{
-				return (bool)value ? 1 : 0;
+				return (bool)value ? "1" : "0";
 			}
 
 			if (value.GetType() == typeof(byte[]))
@@ -76,7 +77,7 @@ namespace SqlDataMapper
 				return String.Format("'{0}'", value);
 			}
 
-			return value;
+			return String.Format(CultureInfo.InvariantCulture, "{0}", value);
 		}
 	}
 }

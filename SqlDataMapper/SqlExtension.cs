@@ -56,7 +56,7 @@ namespace SqlDataMapper.Extension
 		/// <param name="query">The query instance.</param>
 		/// <param name="value">The value.</param>
 		/// <returns>This instance.</returns>
-		[Obsolete("Not supported")]
+		[Obsolete("Not officially supported")]
 		public static SqlQuery SetParameter<TSource>(this SqlQuery query, TSource value) where TSource : class
 		{
 			if (query == null)
@@ -65,8 +65,6 @@ namespace SqlDataMapper.Extension
 			if (value == null)
 				throw new ArgumentNullException("value");
 
-			var state = query.SuppressException;
-			query.SuppressException = true;
 			var properties = typeof(TSource).GetProperties(BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance);
 			foreach (var property in properties)
 			{
@@ -79,7 +77,6 @@ namespace SqlDataMapper.Extension
 				}
 			}
 
-			query.SuppressException = state;
 			return query;
 		}
 	}
