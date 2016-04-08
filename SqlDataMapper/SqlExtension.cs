@@ -59,11 +59,28 @@ namespace SqlDataMapper.Extension
 		[Obsolete("Not officially supported")]
 		public static SqlQuery SetParameter<TSource>(this SqlQuery query, TSource value) where TSource : class
 		{
+			return SetParameter<TSource>(query, value, new SqlFormatter());
+		}
+
+		/// <summary>
+		/// Set properties from an class as parameters.
+		/// </summary>
+		/// <typeparam name="TSource">The source.</typeparam>
+		/// <param name="query">The query instance.</param>
+		/// <param name="value">The value.</param>
+		/// <param name="formatter">The value formatter.</param>
+		/// <returns>This instance.</returns>
+		[Obsolete("Not officially supported")]
+		public static SqlQuery SetParameter<TSource>(this SqlQuery query, TSource value, ISqlFormatter formatter) where TSource : class
+		{
 			if (query == null)
 				throw new ArgumentNullException("query");
 
 			if (value == null)
 				throw new ArgumentNullException("value");
+
+			if (formatter == null)
+				throw new ArgumentNullException("formatter");
 
 			var properties = typeof(TSource).GetProperties(BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance);
 			foreach (var property in properties)
@@ -73,7 +90,7 @@ namespace SqlDataMapper.Extension
 				{
 					var column = new Column(property);
 
-					query.SetParameter(column.Name, column.GetValue(value));
+					query.SetParameter(column.Name, column.GetValue(value), formatter);
 				}
 			}
 

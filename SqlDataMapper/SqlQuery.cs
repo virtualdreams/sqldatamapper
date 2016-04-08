@@ -30,7 +30,7 @@ namespace SqlDataMapper
 		/// <summary>
 		/// Default value formatter.
 		/// </summary>
-		private ISqlFormatter Formatter = new SqlFormatter();
+		static private ISqlFormatter Formatter = new SqlFormatter();
 
 		/// <summary>
 		/// Get the query string
