@@ -1,28 +1,22 @@
-<?xml version="1.0"?>
-<package>
-   <metadata>
-      <!-- Required metadata -->
-      <id>SqlDataMapper.dll</id>
-      <version>4.1.0</version>
-      <title>SqlDataMapper</title>
-      <authors>virtualdreams</authors>
-	  <owners>virtualdreams</owners>
-      <description>Map sql result sets to classes.</description>
-      <!-- Optional metadata
-      <licenseUrl></licenseUrl>
-      <projectUrl></projectUrl>
-      <iconUrl></iconUrl>
-      <copyright></copyright>
-      <requireLicenseAcceptance>false</requireLicenseAcceptance>
-      <summary></summary>
-      <tags></tags>
-      <releaseNotes></releaseNotes>
-      <dependencies></dependencies>
-      <references></references>
-      -->
-   </metadata>
-   <files>                                                       
-		<file src="bin/Release/SqlDataMapper.dll" target="lib\net35" />
-		<file src="bin/Release/SqlDataMapper.xml" target="lib\net35" />
-   </files>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>SqlDataMapper.dll</id>
+        <version>5.0.0</version>
+        <title>SqlDataMapper</title>
+        <authors>virtualdreams</authors>
+        <owners>virtualdreams</owners>
+        <projectUrl>https://github.com/virtualdreams/sqldatamapper</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Map sql results to classes.</description>
+        <tags>sql, mapper, mapping, POCO</tags>
+    </metadata>
+    <files>
+        <file src="bin\Release\net35\SqlDataMapper.dll" target="lib\net35\SqlDataMapper.dll" />
+        <file src="bin\Release\net35\SqlDataMapper.xml" target="lib\net35\SqlDataMapper.xml" />
+        <file src="bin\Release\net40\SqlDataMapper.dll" target="lib\net40\SqlDataMapper.dll" />
+        <file src="bin\Release\net40\SqlDataMapper.xml" target="lib\net40\SqlDataMapper.xml" />
+        <file src="bin\Release\net45\SqlDataMapper.dll" target="lib\net45\SqlDataMapper.dll" />
+        <file src="bin\Release\net45\SqlDataMapper.xml" target="lib\net45\SqlDataMapper.xml" />
+    </files>
 </package>
