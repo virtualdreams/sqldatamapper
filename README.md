@@ -24,13 +24,23 @@ Sample code to work with the library.
 		
 		class Sample
 		{
-			public void Demo()
+			public void Simple()
 			{
 				var _config = new SqlConfig();
 				var _context = _config.CreateContext();
-				var _query = _config.CreateQuery("getSome");
+				var _query = _config.CreateQuery("getAllItems");
 				
 				var _result = _context.QueryForList<Data>(_query);
+			}
+			
+			public void WithParameter()
+			{
+				var _config = new SqlConfig();
+				var _context = _config.CreateContext();
+				var _query = _config.CreateQuery("getItem");
+				_query.SetParameter<int>("id", 100);
+				
+				var _result = _context.QueryForObject<Data>(_query);
 			}
 		}
 	}
@@ -105,7 +115,7 @@ The last file can named with every name, i.e.: *sql.xml*. Some sample content:
 			from
 				table
 			where
-				id = @id
+				id = {id}
 			]]>
 		</statement>
 		<statement id="updateItem">
@@ -113,9 +123,9 @@ The last file can named with every name, i.e.: *sql.xml*. Some sample content:
 			update
 				table
 			set
-				name = @name
+				name = {name}
 			where
-				id = @id
+				id = {id}
 			]]>	
 		</statement>
 		<statement id="deleteItem">
@@ -123,13 +133,13 @@ The last file can named with every name, i.e.: *sql.xml*. Some sample content:
 			delete from
 				table
 			where
-				id = @id
+				id = {id}
 			]]>	
 		</statement>
 		<statement id="partSome">
 			<![CDATA[
-			and name like @term
-			and number like @term
+			and name like {term}
+			and number like {term}
 			]]>	
 		</statement>
 	</statements>
