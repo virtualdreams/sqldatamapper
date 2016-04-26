@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>SqlDataMapper.dll</id>
-        <version>5.0.0</version>
+        <version>5.0.0-beta1</version>
         <title>SqlDataMapper</title>
         <authors>virtualdreams</authors>
         <owners>virtualdreams</owners>
